@@ -7,24 +7,39 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
-## R Markdown
+Context: N=15 participants with a mean age 27.5 +- 2.4 years; 12 were male and 3 were were female. 
+Goals: Differentiating between states: neutral, stress, and amusement.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+#### RespiBAN
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+RespiBAN: equipped with (700Hz) sensors to measure ACC and RESP; has four "analog ports": ECG, EDA, EMG, and TEMP.
+
+- ECG data was recorded via a standard 3-point ECG.
+
+#### Empatica E4
+
+Empatica E4: worn on non-dominant hand; recorded BVP (64Hz), EDA (4Hz), TEMP (4Hz), & ACC (32Hz).
+
+
+
+
 
 ```{r cars}
-summary(cars)
+pickle_sample <- read_csv("/Users/stevenherrera/Downloads/CaseStudy2/data/un_pickled_data/sampled_pickle.csv")
 ```
 
-## Including Plots
+```{r}
+# X1: Sample ID
+# ACC, ECG, EDA, EMG, RESP, TEMP are all RespiBAN CHEST data info
+# Label:  ID of the respective study protocol condition, sampled at 700 Hz
+# ^  0 = not defined / transient, 1 = baseline, 2 = stress, 3 = amusement, 4 = meditation
+# ^  5/6/7 = should be ignored in this dataset
 
-You can also embed plots, for example:
+pickle_sample %>%
+  count(Label)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

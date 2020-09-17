@@ -7,6 +7,7 @@ from collections import OrderedDict
 import os.path
 import pandas as pd
 import glob
+import zipfile
 
 def readFile(file):
     dict = OrderedDict()
@@ -101,8 +102,17 @@ def importIBI(file, idd, typed):
     out_filename = (filesource + '/' + idd + typed + '.csv')
     IBI.to_csv(out_filename, mode='a', header=False)
     print('Done')
-
-filesource = '/WESAD'
+ 
+temps = ['S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11', 'S13', 'S14', 'S15', 'S16', 'S17']
+for x in temps:
+    y = '/hpc/group/sta440-f20/WESAD/WESAD/'
+    t = '_E4_Data.zip'
+    first = y + x + '/' + x + y
+    second = y + x
+    with zipfile.ZipFile(first) as zip_ref:
+                     zip_ref.extractall(second)
+        
+filesource = '/hpc/group/sta440-f20/WESAD/WESAD'
 x = filesource + '/' + idd + '/' + idd + '_E4_Data/' 
 
 ids = ['S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11', 'S13', 'S14', 'S15', 'S16', 'S17']

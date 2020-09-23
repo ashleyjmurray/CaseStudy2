@@ -8,6 +8,7 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(cowplot)
 ```
 
 Context: N=15 participants with a mean age 27.5 +- 2.4 years; 12 were male and 3 were were female. 
@@ -23,13 +24,146 @@ RespiBAN: equipped with (700Hz) sensors to measure ACC and RESP; has four "analo
 
 Empatica E4: worn on non-dominant hand; recorded BVP (64Hz), EDA (4Hz), TEMP (4Hz), & ACC (32Hz).
 
+## Data
 
+```{r imputed-data}
+WESAD_data <- function(directory = "/Volumes/G-DRIVE mobile/CaseStudy2/data/imputed_data/", n) {
+  cur <- paste0(directory, "S", n, ".csv", sep="")
+  return(read_csv(cur))
+}
 
+#takes a while to load
+#unhighlight to run
 
-
-```{r cars}
-pickle_sample <- read_csv("/Users/stevenherrera/Downloads/CaseStudy2/data/un_pickled_data/sampled_pickle.csv")
+S2 <- WESAD_data(n=2)
+# S3 <- WESAD_data(n=3)
+# S4 <- WESAD_data(n=4)
+# S5 <- WESAD_data(n=5)
+# S6 <- WESAD_data(n=6)
+# S7 <- WESAD_data(n=7)
+# S8 <- WESAD_data(n=8)
+# S9 <- WESAD_data(n=9)
+# S10 <- WESAD_data(n=10)
+# S11 <- WESAD_data(n=11)
+# S13 <- WESAD_data(n=13)
+# S14 <- WESAD_data(n=14)
+# S15 <- WESAD_data(n=15)
+# S16 <- WESAD_data(n=16)
+# S17 <- WESAD_data(n=17)
 ```
+
+#### Histograms
+
+```{r}
+hist_plot <- function(person, variable, cuts) {
+  
+  d = get(paste0("S",person,sep=""))
+  
+  p1 <- d[variable] %>%
+    ggplot(aes(x="", y = eval(as.name(variable)))) +
+    geom_boxplot(fill = "lightblue", color = "black") + 
+    coord_flip() +
+    theme_classic() +
+    xlab("") + ylab(variable) +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+  
+  p2 <- d[variable] %>%
+    ggplot() +
+    geom_histogram(aes(x = eval(as.name(variable))), bins = cuts, 
+                   fill = "lightblue") +
+    ylab("Count") + xlab("") +
+    theme_classic()
+  
+  cowplot::plot_grid(p2, p1,
+                     ncol = 1, rel_heights = c(2, 1),
+                     align = 'v', axis = 'lr') 
+} 
+
+p = 2
+v = 100
+
+# can also use lapply
+# hist_plot(person=p, variable="ACC_x", cuts=v)
+# hist_plot(person=p, variable="ACC_y", cuts=v)
+# hist_plot(person=p, variable="ACC_z", cuts=v)
+# hist_plot(person=p, variable="ECG", cuts=v)
+hist_plot(person=p, variable="EMG", cuts=v)
+# hist_plot(person=p, variable="EDA", cuts=v)
+hist_plot(person=p, variable="Temp", cuts=v)
+# hist_plot(person=p, variable="Resp", cuts=v)
+# hist_plot(person=p, variable="BVP", cuts=v)
+# hist_plot(person=p, variable="wr_ACC_x", cuts=v)
+# hist_plot(person=p, variable="wr_ACC_y", cuts=v)
+# hist_plot(person=p, variable="wr_ACC_z", cuts=v)
+hist_plot(person=p, variable="wr_TEMP", cuts=v)
+# hist_plot(person=p, variable="wr_EDA", cuts=v)
+```
+
+#### PCA
+
+```{r}
+library(reticulate)
+py_install("pandas")
+source_python("reading.py")
+pic2 <- read_pickle_file("/Volumes/G-DRIVE mobile/CaseStudy2/WESAD/S2/S2.pkl")
+S2$label <- as.factor(pic2$label)
+```
+
+```{r}
+# principle component analysis
+wesad.pca <- prcomp(S2[,c(2:8,10:15)])
+wesad.pca
+```
+
+```{r}
+library(ggfortify)
+pca.plot <- autoplot(wesad.pca, data = S2, colour = 'label')
+pca.plot
+```
+
+
+#### Feature Engineering
+
+
+
+##### EMG (electromyogram) (700Hz only in chest data)
+
+Feature Engineering:
+1. Mean, STD of EMG signal
+2. Dynamic Range
+3. Absolute Integral
+4. Median of the EMG signal
+5. 10th and 90th percentile
+6. Mean, median, and peak: frequency
+7. Energy in seven bands
+8. # peaks
+9. Mean, STD of peak amplitudes
+10. Sum (E) and Normalized Sum (E^) of peak amplitudes
+
+```{r}
+#pic2$signal$chest$EMG
+library(zoo)
+EMG_mean <- c()
+EMG_sd <- c()
+EMG_range <- c()
+
+
+EMG_mean = c(EMG_mean, rollapply(subdata$EMG, 240, mean, fill = NA))
+EMG_sd = c(EMG_sd, rollapply(subdata$EMG, 240, sd, fill = NA))
+EMG_range = c(EMG_range, rollapply(subdata$EMG, 240, get_range, fill = NA))
+
+
+
+ggplot(data = S2, mapping = aes(x))
+
+```
+
+
+
+
+
+
 
 ```{r}
 # X1: Sample ID
@@ -38,8 +172,20 @@ pickle_sample <- read_csv("/Users/stevenherrera/Downloads/CaseStudy2/data/un_pic
 # ^  0 = not defined / transient, 1 = baseline, 2 = stress, 3 = amusement, 4 = meditation
 # ^  5/6/7 = should be ignored in this dataset
 
-pickle_sample %>%
-  count(Label)
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

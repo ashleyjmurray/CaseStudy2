@@ -15,7 +15,7 @@ import gc
 def process_emg(df):
     df = df['EMG']
     df = df.dropna()
-    signal, info = nk.emg_process(df['EMG'], sampling_rate=700)
+    signal, info = nk.emg_process(df, sampling_rate=700)
     return info
 
 def process_ecg(df):

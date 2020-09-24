@@ -18,8 +18,9 @@ def process_emg(df):
     return info
 
 def process_ecg(df):
+    df = df['ECG']
     df = df.dropna()
-    processed_data, info = nk.bio_process(ecg=df["ECG"], sampling_rate=700)
+    processed_data, info = nk.bio_process(ecg=df, sampling_rate=700)
     results = nk.bio_analyze(processed_data, sampling_rate=700)
     return results
 
@@ -112,22 +113,21 @@ print("created windows")
 #example = list_of_df[0][0]
 
 y = []
-for o in windows:
-    for i in o:
-        ecg_data = process_ecg(i)
-        print("ecg data", ecg_data)
-        ecg_data['subject'] = i['subject']
-        y.append(ecg_data)
-        bvp_data = process_bvp(i)
-        print("bvp data", bvp_data)
-        bvp_data['subject'] = i['subject']
-        y.append(bvp_data)
-        eda_data = get_eda_features(i['EDA'])
-        print("eda data", eda_data)
-        eda_data['subject'] = i['subject']
-        emg_data = process_emg(i)
-        print("emgdata", emg_data)
-        emg_data['subject'] = i['subject']
+for i in o:
+   ecg_data = process_ecg(i)
+   print("ecg data", ecg_data)
+   ecg_data['subject'] = i['subject'].head(1).values[0]
+   y.append(ecg_data)
+   bvp_data = process_bvp(i)
+   print("bvp data", bvp_data)
+   bvp_data['subject'] = i['subject'].head(1).values[0]
+   y.append(bvp_data)
+   eda_data = get_eda_features(i['EDA_x'])
+   print("eda data", eda_data)
+   eda_data['subject'] = i['subject'].head(1).values[0]
+   emg_data = process_emg(i)
+   print("emgdata", emg_data)
+   emg_data['subject'] = i['subject'].head(1).values[0]
 final_df = pd.concat(y)
 final_df.to_csv("final.csv")
 

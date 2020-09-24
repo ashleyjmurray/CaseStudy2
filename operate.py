@@ -82,6 +82,13 @@ def create_windows(df):
     return x
     
 df = pd.read_csv("data_w_nas.csv")
+df = df[df.label ! = 1.0]
+df = df[df.label ! = 5.0]
+df = df[df.label ! = 6.0]
+df = df[df.label ! = 7.0]
+df = df[df.label ! = 4.0]
+df = df[df['label'].notna()]
+
 print("read it in")
 d = dict((*df.groupby('subject'),))
 print("grouped it")

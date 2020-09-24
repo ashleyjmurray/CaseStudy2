@@ -13,17 +13,19 @@ from tqdm import tqdm
 import gc
  
 def process_emg(df):
+    df = df.dropna()
     signal, info = nk.emg_process(df['EMG'], sampling_rate=700)
     return info
 
 def process_ecg(df):
-    print(type(df))
+    df = df.dropna()
     processed_data, info = nk.bio_process(ecg=df["ECG"], sampling_rate=700)
     results = nk.bio_analyze(processed_data, sampling_rate=700)
     return results
 
 def process_bvp(df):
     signal = df['BVP']
+    signal = signal.dropna()
     out = bvp.bvp(signal=signal, sampling_rate=700., show=False)
     heart_rate = list(out[4])
     return heart_rate
@@ -31,6 +33,7 @@ def process_bvp(df):
 from scipy.integrate import simps
  
 def get_eda_features(eda, sample_rate=700, windex = (0, -1)):
+    eda = eda.dropna()
     eda = eda[windex[0]:windex[1]]
     t = (np.arange(0,len(eda)+1)*(1/sample_rate))[windex[0]:windex[1]]
     signals, info = nk.eda_process(eda, sampling_rate=sample_rate)

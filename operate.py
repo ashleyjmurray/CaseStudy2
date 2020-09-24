@@ -30,7 +30,7 @@ def process_bvp(df):
     heart_rate = list(out[4])
     return heart_rate
 
-from scipy.integrate import simps
+from scipy.integrate import 
  
 def get_eda_features(eda, sample_rate=700, windex = (0, -1)):
     eda = eda.dropna()
@@ -48,7 +48,7 @@ def get_eda_features(eda, sample_rate=700, windex = (0, -1)):
     peak_integrals = []
     for onset_idx, peak_idx in zip(info["SCR_Onsets"], info["SCR_Peaks"]):
         cur_y = cleaned[onset_idx:peak_idx+1]
-        cur_integral = simps(cur_y, dx = 1/700)
+        cur_integral = simps(cur_y, dx = 1/sample_rate)
         peak_integrals.append(cur_integral)
     sum_response_areas = np.sum(peak_integrals)
     mean_eda = np.mean(eda)

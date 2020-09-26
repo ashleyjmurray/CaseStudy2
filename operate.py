@@ -13,8 +13,10 @@ from tqdm import tqdm
 import gc
  
 def process_emg(df):
-    df = df['EMG']
     emg = df['EMG']
+    #emg = df['EMG']
+    emg = emg.reset_index()
+    emg = emg['EMG']
     emg = emg.dropna()
     signal, info = nk.emg_process(emg, sampling_rate=700)
     return info

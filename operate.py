@@ -203,7 +203,12 @@ y = pd.DataFrame(columns = ['ECG_Rate_Mean', 'HRV_RMSSD', 'HRV_MeanNN', 'HRV_SDN
   'temp_chest_standard_deviation',
   'temp_chest_tenth_quantile',
   'temp_chest_nintieth_quantile',
-  'temp_chest_range', 'subject', 'label'])
+  'temp_chest_range',
+  'acc_x_mean',
+  'acc_y_mean',
+  'acc_z_mean',
+  'acc_square_root',
+  'subject', 'label'])
 
 
 
@@ -359,8 +364,15 @@ for i in range(len(windows)):
     temp_chest_nintieth_quantile = temp_features.temp_nintieth_quantile.values[0]
     temp_chest_range = temp_features.temp_range.values[0]
     
+    import math
+    acc_x_mean = windows[i].ACC_x.mean()
+    acc_y_mean = windows[i].ACC_y.mean()
+    acc_z_mean = windows[i].ACC_z.mean()
+    temp = math.pow(acc_x_mean, 2) + math.pow(acc_y_mean, 2) + math.pow(acc_z_mean, 2)
+    acc_square_root = math.sqrt(temp)
     
-    y.loc[len(y)] = [ECG_Rate_Mean, HRV_RMSSD, HRV_MeanNN, HRV_SDNN, HRV_SDSD,HRV_CVNN, HRV_CVSD, HRV_MedianNN, HRV_MadNN, HRV_MCVNN, HRV_IQRNN, HRV_pNN50, HRV_pNN20, HRV_TINN, HRV_HTI, HRV_ULF,HRV_VLF, HRV_LF, HRV_HF, HRV_VHF, HRV_LFHF, HRV_LFn,HRV_HFn, HRV_LnHF, HRV_SD1, HRV_SD2, HRV_SD1SD2, HRV_S,HRV_CSI, HRV_CVI,HRV_CSI_Modified, HRV_PIP, HRV_IALS,HRV_PSS, HRV_PAS, HRV_GI, HRV_SI, HRV_AI, HRV_PI, HRV_C1d,HRV_C1a, HRV_SD1d, HRV_SD1a, HRV_C2d, HRV_C2a, HRV_SD2d,HRV_SD2a, HRV_Cd, HRV_Ca, HRV_SDNNd, HRV_SDNNa, HRV_ApEn,HRV_SampEn,eda_mean_chest,eda_std_chest,eda_min_chest,eda_max_chest,eda_slope_chest,eda_range_chest,eda_mean_scl_chest, eda_std_scl_chest,eda_std_scr_chest,eda_scl_corr_chest,eda_num_scr_seg_chest,eda_sum_startle_mag_chest,eda_sum_response_time_chest,eda_sum_response_areas_chest,eda_mean_wr,eda_std_wr,eda_min_wr, eda_max_wr,eda_slope_wr,eda_range_wr,eda_mean_scl_wr,eda_std_scl_wr,eda_std_scr_wr,eda_scl_corr_wr,eda_num_scr_seg_wr,eda_sum_startle_mag_wr,eda_sum_response_time_wr,eda_sum_response_areas_wr, resp_rate,mean_inhale_duration,std_inhale_duration,mean_exhale_duration,std_exhale_duration,ie_ratio,resp_stretch,temp_wr_mean,temp_wr_standard_deviation,temp_wr_tenth_quantile,temp_wr_nintieth_quantile, temp_wr_range,temp_chest_mean,temp_chest_standard_deviation,temp_chest_tenth_quantile,temp_chest_nintieth_quantile,temp_chest_range, subject, label]
+    
+    y.loc[len(y)] = [ECG_Rate_Mean, HRV_RMSSD, HRV_MeanNN, HRV_SDNN, HRV_SDSD,HRV_CVNN, HRV_CVSD, HRV_MedianNN, HRV_MadNN, HRV_MCVNN, HRV_IQRNN, HRV_pNN50, HRV_pNN20, HRV_TINN, HRV_HTI, HRV_ULF,HRV_VLF, HRV_LF, HRV_HF, HRV_VHF, HRV_LFHF, HRV_LFn,HRV_HFn, HRV_LnHF, HRV_SD1, HRV_SD2, HRV_SD1SD2, HRV_S,HRV_CSI, HRV_CVI,HRV_CSI_Modified, HRV_PIP, HRV_IALS,HRV_PSS, HRV_PAS, HRV_GI, HRV_SI, HRV_AI, HRV_PI, HRV_C1d,HRV_C1a, HRV_SD1d, HRV_SD1a, HRV_C2d, HRV_C2a, HRV_SD2d,HRV_SD2a, HRV_Cd, HRV_Ca, HRV_SDNNd, HRV_SDNNa, HRV_ApEn,HRV_SampEn,eda_mean_chest,eda_std_chest,eda_min_chest,eda_max_chest,eda_slope_chest,eda_range_chest,eda_mean_scl_chest, eda_std_scl_chest,eda_std_scr_chest,eda_scl_corr_chest,eda_num_scr_seg_chest,eda_sum_startle_mag_chest,eda_sum_response_time_chest,eda_sum_response_areas_chest,eda_mean_wr,eda_std_wr,eda_min_wr, eda_max_wr,eda_slope_wr,eda_range_wr,eda_mean_scl_wr,eda_std_scl_wr,eda_std_scr_wr,eda_scl_corr_wr,eda_num_scr_seg_wr,eda_sum_startle_mag_wr,eda_sum_response_time_wr,eda_sum_response_areas_wr, resp_rate,mean_inhale_duration,std_inhale_duration,mean_exhale_duration,std_exhale_duration,ie_ratio,resp_stretch,temp_wr_mean,temp_wr_standard_deviation,temp_wr_tenth_quantile,temp_wr_nintieth_quantile, temp_wr_range,temp_chest_mean,temp_chest_standard_deviation,temp_chest_tenth_quantile,temp_chest_nintieth_quantile,temp_chest_range, acc_x_mean, acc_y_mean, acc_z_mean, acc_square_root, subject, label]
     
 
 y.to_csv("final.csv")

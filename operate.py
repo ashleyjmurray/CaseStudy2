@@ -11,15 +11,53 @@ import os
 from functools import reduce
 from tqdm import tqdm
 import gc
+
+def resp_features(rsp):
+    cleaned = nk.rsp_process(rsp.dropna().reset_index(drop = True))
+    mean_rsp_rate = np.mean(cleaned[0]["RSP_Rate"])
+    peak_idx = cleaned[1]["RSP_Peaks"]
+    trough_idx = cleaned[1]["RSP_Troughs"]
+    for i, (p_idx, t_idx) in enumerate(zip(peak_idx, trough_idx)):
+        if i == 0 or i == len(peak_idx)-1:
+            continue
+        inhale_time = (p_idx - t_idx)*(1/700)
+        exhale_time = (cleaned[1]["RSP_Troughs"][i+1]-p_idx)*(1/700)
+    mean_inhale_duration = np.mean(inhale_time)
+    std_inhale_duration = np.std(inhale_time)
+    mean_exhale_duration = np.mean(exhale_time)
+    std_exhale_duration = np.std(exhale_time)
+    ie_ratio = np.sum(inhale_time)/np.sum(exhale_time)
+    stretch = np.max(rsp) - np.min(rsp)
+    return pd.DataFrame({"resp_rate":mean_rsp_rate, "mean_inhale_duration":mean_inhale_duration,"std_inhale_duration":std_inhale_duration,
+                        "mean_exhale_duration":[mean_exhale_duration], "std_exhale_duration":[std_exhale_duration], "ie_ratio":[ie_ratio],
+                        "resp_stretch":[stretch]})
  
 def process_emg(df):
+    features = pd.DataFrame(columns=['emg_mean', 'emg_standard_deviation', 'emg_num_peaks', "emg_tenth_quantile", "emg_nintieth_quantile", "emg_range"])
     emg = df['EMG']
-    #emg = df['EMG']
-    emg = emg.reset_index()
-    emg = emg['EMG']
-    emg = emg.dropna()
-    signal, info = nk.emg_process(emg, sampling_rate=700)
-    return info
+    peaks, _ = find_peaks(emg)
+    num_peaks = len(peaks)
+    mean = emg.mean()
+    standard_deviation = emg.std()
+    tenth_quantile = emg.quantile(.1)
+    nintieth_quantile = emg.quantile(.9)
+    range_e = emg.max() - emg.min()
+    features.loc[len(features)] = [mean, standard_deviation, num_peaks, tenth_quantile, nintieth_quantile, range_e]
+    return features
+
+def process_temp(df, wrist):
+    features = pd.DataFrame(columns=['temp_mean', 'temp_standard_deviation', 'temp_tenth_quantile', 'temp_nintieth_quantile', 'temp_range'])
+    if wrist:
+        temp = df['wr_Temp']
+    else:
+        temp = df['Temp']
+    mean = temp.mean()
+    standard_deviation = temp.std()
+    tenth_quantile = temp.quantile(.1)
+    nintieth_quantile = temp.quantile(.9)
+    range_t = temp.max() - temp.min()
+    features.loc[len(features)] = [mean, standard_deviation, tenth_quantile, nintieth_quantile, range_t]
+    return features
 
 def process_ecg(df):
     df = df['ECG']
@@ -28,12 +66,12 @@ def process_ecg(df):
     results = nk.bio_analyze(processed_data, sampling_rate=700)
     return results
 
-def process_bvp(df):
-    signal = df['BVP']
-    signal = signal.dropna()
-    out = bvp.bvp(signal=signal, sampling_rate=700., show=False)
-    heart_rate = list(out[4])
-    return heart_rate
+#def process_bvp(df):
+#    signal = df['BVP']
+#    signal = signal.dropna()
+#    out = bvp.bvp(signal=signal, sampling_rate=700., show=False)
+#    heart_rate = list(out[4])
+#    return heart_rate
 
 from scipy.integrate import simps
 
@@ -82,7 +120,6 @@ def get_eda_features(eda, sample_rate=700, windex = (0, -1)):
                        "num_scr_seg":[num_scr_segments], "sum_startle_mag":[sum_startle_magnitudes],"sum_response_time":[sum_response_time],
                        "sum_response_areas":[sum_response_areas]})
 
-
 def create_windows(df, initial_time):
     ti = initial_time
     indices = []
@@ -96,7 +133,6 @@ def create_windows(df, initial_time):
     for x in range(len(indices)-1):
         s = df.loc[indices[x]:indices[x+1]]
         samples.append(s)
-    #x = sample(samples, math.ceil(.2*len(samples)))
     return samples
     
 df = pd.read_csv("amusement_and_stress.csv")
@@ -117,21 +153,44 @@ for i in labels:
         windows.append(t)
 
 y = []
-for i in windows:
-    ecg_data = process_ecg(i)
-    print("ecg data", ecg_data)
-    ecg_data['subject'] = i['subject'].head(1).values[0]
+for i in range(len(windows)):
+    #df = pd.DataFrame()
+    ecg_data = process_ecg(windows[i])
+    ecg_data['subject'] = windows[i]['subject'].head(1).values[0]
+    ecg_data['window_trial'] = i
+    ecg_data['label'] = windows[i]['label'].head(1).values[0]
     y.append(ecg_data)
-    bvp_data = process_bvp(i)
-    print("bvp data", bvp_data)
-    bvp_data['subject'] = i['subject'].head(1).values[0]
-    y.append(bvp_data)
-    eda_data = get_eda_features(i['EDA_x'])
-    print("eda data", eda_data)
-    eda_data['subject'] = i['subject'].head(1).values[0]
-    emg_data = process_emg(i)
-    print("emgdata", emg_data)
-    emg_data['subject'] = i['subject'].head(1).values[0]
+    
+    eda_data = get_eda_features(windows[i]['EDA_x'])
+    eda_data['subject'] = windows[i]['subject'].head(1).values[0]
+    eda_data["window_trial"] = i
+    eda_data['label'] = windows[i]['label'].head(1).values[0]
+    eda_data['wrist_or_chest'] = 'chest'
+    y.append(eda_data)
+    
+    eda_data_wr = get_eda_features(windows[i]['EDA_y'], sample_rate=4)
+    eda_data_wr['subject'] = windows[i]['subject'].head(1).values[0]
+    eda_data_wr["window_trial"] = i
+    eda_data_wr['label'] = windows[i]['label'].head(1).values[0]
+    eda_data_wr['wrist_or_chest'] = 'wrist'
+    y.append(eda_data_wr)
+    
+    resp_data = resp_features(windows[i]['Resp'])
+    resp_data['subject'] = windows[i]['subject'].head(1).values[0]
+    resp_data['window_trial'] = i
+    y.append(resp_data)
+    
+    temp_features_wr = process_temp(windows[i], True)
+    temp_features_wr['subject'] = windows[i]['subject'].head(1).values[0]
+    temp_features_wr['window_trial'] = i
+    temp_features_wr['wrist_or_chest'] = 'wrist'
+    y.append(temp_features_wr)
+    
+    temp_features = process_temp(windows[i], False)
+    temp_features['subject'] = windows[i]['subject'].head(1).values[0]
+    temp_features['window_trial'] = i
+    temp_features['wrist_or_chest'] = 'chest'
+    y.append(temp_features)
     
 final_df = pd.concat(y)
 final_df.to_csv("final.csv")

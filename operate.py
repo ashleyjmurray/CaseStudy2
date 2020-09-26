@@ -117,7 +117,7 @@ for i in labels:
         windows.append(t)
 
 y = []
-for x in windows:
+for i in windows:
     ecg_data = process_ecg(i)
     print("ecg data", ecg_data)
     ecg_data['subject'] = i['subject'].head(1).values[0]

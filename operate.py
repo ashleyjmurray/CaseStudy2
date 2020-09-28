@@ -1,3 +1,4 @@
+#import all of the packages
 import neurokit2 as nk
 import pandas as pd
 import numpy as np
@@ -11,12 +12,18 @@ import os
 from functools import reduce
 from tqdm import tqdm
 import gc
+from scipy.integrate import simps
 
+#function that calculates the resp features, utilizing the neurokit2 package
+#returns a dataframe object that has the resp rate, mean inhale duration, standard deviation of the inhale duration,
+#mean exhale duration, standard deviation of the exhale duration, ie ration, and the resp stretch
 def resp_features(rsp):
     cleaned = nk.rsp_process(rsp.dropna().reset_index(drop = True))
     mean_rsp_rate = np.mean(cleaned[0]["RSP_Rate"])
     peak_idx = cleaned[1]["RSP_Peaks"]
     trough_idx = cleaned[1]["RSP_Troughs"]
+    inhale_time = 0
+    exhale_time = 0
     for i, (p_idx, t_idx) in enumerate(zip(peak_idx, trough_idx)):
         if i == 0 or i == len(peak_idx)-1:
             continue
@@ -31,7 +38,10 @@ def resp_features(rsp):
     return pd.DataFrame({"resp_rate":mean_rsp_rate, "mean_inhale_duration":mean_inhale_duration,"std_inhale_duration":std_inhale_duration,
                         "mean_exhale_duration":[mean_exhale_duration], "std_exhale_duration":[std_exhale_duration], "ie_ratio":[ie_ratio],
                         "resp_stretch":[stretch]})
- 
+                        
+#function that calculates the emg features. it returns a dataframe containing the mean emg, standard deviation of
+#the emg, the number of peaks in the emg, the tenth quantile of the emg, the nintieth quantile of the emg, and
+#the range of the emg.
 def process_emg(df):
     features = pd.DataFrame(columns=['emg_mean', 'emg_standard_deviation', 'emg_num_peaks', "emg_tenth_quantile", "emg_nintieth_quantile", "emg_range"])
     emg = df['EMG']
@@ -45,6 +55,9 @@ def process_emg(df):
     features.loc[len(features)] = [mean, standard_deviation, num_peaks, tenth_quantile, nintieth_quantile, range_e]
     return features
 
+#this function processes the temperature and returns the features concerning temperature.
+#it returns a dataframe containing the mean temperature, the standard deviation of the temperature, the tenth quantile,
+#the nintieth quantile, and the range of the temperature values.
 def process_temp(df, wrist):
     features = pd.DataFrame(columns=['temp_mean', 'temp_standard_deviation', 'temp_tenth_quantile', 'temp_nintieth_quantile', 'temp_range'])
     if wrist:
@@ -59,6 +72,8 @@ def process_temp(df, wrist):
     features.loc[len(features)] = [mean, standard_deviation, tenth_quantile, nintieth_quantile, range_t]
     return features
 
+#function returns the processes ecg. it utilizes the neurokit2 package to process the results to calculate
+#features associated with the heart rate variability. returns a dataframe object.
 def process_ecg(df):
     df = df['ECG']
     df = df.dropna()
@@ -66,15 +81,8 @@ def process_ecg(df):
     results = nk.bio_analyze(processed_data, sampling_rate=700)
     return results
 
-#def process_bvp(df):
-#    signal = df['BVP']
-#    signal = signal.dropna()
-#    out = bvp.bvp(signal=signal, sampling_rate=700., show=False)
-#    heart_rate = list(out[4])
-#    return heart_rate
-
-from scipy.integrate import simps
-
+#function that returns the features associated with eda. this also utilizes the neurokit2 package to process the
+#raw eda signals. The sample rate input depends on whether the eda signals are from the wrist or the chest device.
 def get_eda_features(eda, sample_rate=700, windex = (0, -1)):
     if sample_rate == 4:
         sample_rate = 8
@@ -120,31 +128,55 @@ def get_eda_features(eda, sample_rate=700, windex = (0, -1)):
                        "num_scr_seg":[num_scr_segments], "sum_startle_mag":[sum_startle_magnitudes],"sum_response_time":[sum_response_time],
                        "sum_response_areas":[sum_response_areas]})
 
+#function that creates the overlapping windows per each subject, and for amusement and stress separately.
+#the windows are spaced out approximately per 60 seconds. there are some windows that end up smaller than the others,
+#just by the fact that there are not even increments of 60 seconds for both stress and amusement conditions for each of
+#the subjects.
 def create_windows(df, initial_time):
-    ti = initial_time
     indices = []
-    while(True):
-        ti = ti + 60
-        x = df[df['time'] == ti]
-        if x.empty:
-            break
-        indices.append(x.index[0])
     samples = []
+    length = math.floor(len(df) / 70000)
+    counter = 0
+    while(length != 0):
+        counter = counter + 70000
+        indices.append(counter)
+        length = length - 1
+        
+    samples.append(df.loc[0:indices[0]]) #from the first row of the dataframe to the first 60 seconds
+    diff = int(indices[1]-indices[0])
     for x in range(len(indices)-1):
         s = df.loc[indices[x]:indices[x+1]]
         samples.append(s)
+        temp = int(indices[x+1] - indices[x])
+        temp_2 = int(temp/2)
+        if temp_2 + diff <= len(df):
+            ss = df.loc[temp_2:temp_2+diff]
+            samples.append(ss)
+        else:
+            ss = df.loc[temp_2:len(df)-1]
+            samples.append(ss)
+        final_s = df.loc[indices[len(indices)-1]:len(df)] #final
+        samples.append(final_s)
     return samples
     
+#read in the csv file containing only the amusement and stress conditions. this calls the function to create the
+#windows.
 df = pd.read_csv("amusement_and_stress.csv")
 labels = ['S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11', 'S13', 'S14', 'S15', 'S16', 'S17']
 windows = []
 for i in labels:
     sub_stress = df[(df['subject'] == i) & (df['label'] == 2.0)]
+    sub_stress = sub_stress.reset_index()
+    
     sub_amusement = df[(df['subject'] == i) & (df['label'] == 3.0)]
+    sub_amusement = sub_amusement.reset_index()
+    
     sub_stress_temp = sub_stress['time'].head(1)
     stress_initial_time = sub_stress_temp.values[0]
+    
     sub_amusement_temp = sub_amusement['time'].head(1)
     amusement_initial_time = sub_amusement_temp.values[0]
+    
     temp = create_windows(sub_stress, stress_initial_time)
     for t in temp:
         windows.append(t)
@@ -152,6 +184,7 @@ for i in labels:
     for t in temp2:
         windows.append(t)
 
+#create the dataframe that will be the final output ocntaining all of the features for the particular window.
 y = pd.DataFrame(columns = ['ECG_Rate_Mean', 'HRV_RMSSD', 'HRV_MeanNN', 'HRV_SDNN', 'HRV_SDSD','HRV_CVNN', 'HRV_CVSD', 'HRV_MedianNN', 'HRV_MadNN', 'HRV_MCVNN', 'HRV_IQRNN', 'HRV_pNN50', 'HRV_pNN20', 'HRV_TINN', 'HRV_HTI', 'HRV_ULF',
 'HRV_VLF', 'HRV_LF', 'HRV_HF', 'HRV_VHF', 'HRV_LFHF', 'HRV_LFn',
 'HRV_HFn', 'HRV_LnHF', 'HRV_SD1', 'HRV_SD2', 'HRV_SD1SD2', 'HRV_S',
@@ -212,7 +245,7 @@ y = pd.DataFrame(columns = ['ECG_Rate_Mean', 'HRV_RMSSD', 'HRV_MeanNN', 'HRV_SDN
 
 
 
-
+#for each of the windows, calculate the features for each of the raw signals. 
 for i in range(len(windows)):
     
     subject = windows[i]['subject'].head(1).values[0]

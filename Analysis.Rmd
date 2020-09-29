@@ -27,6 +27,11 @@ pkgTest("ggfortify")
 pkgTest("ggplot2")
 pkgTest("dplyr")
 pkgTest("tidyr")
+pkgTest("broom")
+pkgTest("car")
+pkgTest("olsrr")
+pkgTest("corrplot")
+pkgTest("reshape2")
 ```
 
 ```{r setup, include=FALSE}
@@ -38,6 +43,11 @@ library(ggfortify)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(broom)
+library(car)
+library(olsrr)
+library(corrplot)
+library(reshape2)
 #py_install("pandas")
 ```
 
@@ -60,12 +70,61 @@ A challenge in the detection of stress from wearable data is its physiological s
 
 
 
+##### ashley and nathan look at dis for correlation
+
+(Link to paper about multicollinearity with logistic regression, may be useful: https://www-tandfonline-com.proxy.lib.duke.edu/doi/abs/10.1080/09720502.2010.10700699?journalCode=tjim20)
+
+```{r}
+# packages to do all of this
+library(broom)
+library(car)
+library(olsrr)
+library(corrplot)
+library(reshape2)
+
+# loading final df
+final <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/final.csv") %>% 
+  mutate(label = as.factor(label))
+
+# remove columns w NAs, remove subject, remove identifier column X1
+final_na <- final[, colSums(is.na(final)) != nrow(final)] %>% dplyr::select(-subject, -X1)
+
+# basic logistic regression with all variables
+full_model <- glm(label ~ ., data = final_na, family = binomial)
+```
 
 
+```{r}
+# remove label (the amusemet or stress identifier variable) to do correlation analysis
+final_na$label <- NULL
+# rename
+d <- final_na
+# apply correlations
+corr.d <- cor(d, use="pairwise.complete.obs")
+# NAs on the diagonal
+corr.d[ lower.tri( corr.d, diag = TRUE ) ] <- NA
+# plot the correlations (it looks messy)
+corrplot( corr.d, type = "upper", diag = FALSE )
+```
 
+```{r}
+# sort pairs of correlated variables
+m <- melt( corr.d )
+m <- m[order(- abs(m$value)), ]
+# get rid of NAs
+m <- na.omit(m)
+# view the highest correlated: correlation vals > 0.5
+(m[ which( m$value > 0.5 ), ])
+```
 
+is it true? check *eda_sum_response_time_chest* against *eda_sum_response_areas_chest*
 
+```{r}
+modela <- lm(eda_sum_response_time_chest ~ eda_sum_response_areas_chest, data = final)
+summary(modela)
+```
 
+never seen the warning "essentially perfect fit: summary may be unreliable" b4, iconic
 
 
 

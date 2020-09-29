@@ -1,0 +1,23 @@
+1. Run the following command to get the correct Python version on your cluster:
+
+    module load Python/3.8.1
+    
+2. Create a virtual environment:
+    
+    virtualenv env
+    
+3. Activate your virtual environment:
+
+    source env/bin/activate
+
+4. Install the necessary packages by running the command:
+
+    python3 -m pip install -r requirements.txt
+    
+5. Run this command (xgboost doesn't work unless you run this in this way):
+
+    python3 -m pip install xgboost
+    
+6. Submit the job:
+
+    sbatch submit_job.sh

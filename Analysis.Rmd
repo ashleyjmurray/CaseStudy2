@@ -31,10 +31,17 @@ pkgTest("car")
 pkgTest("olsrr")
 pkgTest("corrplot")
 pkgTest("reshape2")
+pkgTest("caret")
+pkgTest("gridExtra")
+pkgTest("gridGraphics")
+pkgTest("grid")
 ```
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE,
+                      message = FALSE,
+                      warning = FALSE)
+ggplot2::theme_set(new = theme_bw())
 library(tidyverse)
 library(cowplot)
 library(reticulate)
@@ -47,83 +54,43 @@ library(car)
 library(olsrr)
 library(corrplot)
 library(reshape2)
+library(caret)
+library(gridExtra)
+library(gridGraphics)
+library(grid)
 #py_install("pandas")
 ```
 
 ```{r load_data, include=FALSE}
 raw_stress_data <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/amusement_and_stress.csv") %>% 
   mutate(label = as.factor(label))
-stress_data <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/states_data.csv") %>% 
+final <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/final.csv") %>% 
   mutate(label = as.factor(label))
 ```
 
 # Introduction
 
-Wearable technologies have become increasingly prevalent in recent years, with [citing statistics about how many people wear an Apple watch etc etc]. While these devices are commonly marketed as a valuable communication interface for their users, they also provide a wide array of health monitoring features, such as [examples of health monitoring features and citations]. Health-conscious consumers have increasingly [cite] adopted wearables, with [some %] of consumers citing health monitoring as a primary motivating factor for wearable use. 
+Wearable technologies have become increasingly prevalent in recent years, with public interest taking note of the accessibility, health interests, and innovativeness [[1]][Bibliography], especially with products such as the Apple Watch. While these devices are commonly marketed as a valuable communication interface for their users, they also provide a wide array of health monitoring features, such as electrocardiography (ECG) [[2]][Bibliography], heart rate variability (HRV) [[3]][Bibliography], and accelerometry (ACC) [[4]][Bibliography]. Health-conscious consumers have increasingly [[1,5,6]][Bibliography] adopted wearables, with [some %] of consumers citing health monitoring as a primary motivating factor for wearable use. 
 
-Stress is a critical mental and physical health issue affecting all members of the population at some level. It is well-established that stress leads to a number of long-term health conditions, ranging from headaches and sleep issues to an increased risk of cardiovascular disease [WESAD’s citations]. For this reason, researchers have been interested in establishing and interpreting models to predict the affective state of stress using information from wearable devices. [Researcher..] created a [...] model to [...] that achieved [...] results on [...] data. 
+
+
+[citing statistics about how many people wear an Apple watch etc etc] 
+
+Stress is a critical mental and physical health issue affecting all members of the population at some level. It is well-established that stress leads to a number of long-term health conditions, ranging from headaches and sleep issues to an increased risk of cardiovascular disease [[2]][Bibliography]. 
+
+For this reason, researchers have been interested in establishing and interpreting models to predict the affective state of stress using information from wearable devices. [Researcher..] created a [...] model to [...] that achieved [...] results on [...] data. 
 
 A challenge in the detection of stress from wearable data is its physiological similarity to the state of amusement. The two states share [these characteristics], which may be difficult to discern in biological monitoring data. For that reason, this paper will focus on building a model to discern between a state of stress and a state of amusement using the WESAD database. We expand upon previous work by performing more extensive feature engineering, addressing missing data considerations with a K-Nearest Neighbors upsampling strategy, and improving predictive accuracy using a stacking ensemble method.
 
 
+1. Determine whether sensor data are useful in discriminating between stress and amusement conditions
+2. If sensor data are useful in discriminating between stress and amusement, describe how (e.g., is higher blood pressure related to a greater likelihood of stress vs amusement)
+3. Determine which types of sensor data are most useful in discriminating between stress and amusement, alone or in combination
+4. Determine whether we can detect stress (vs amusement) only using the wrist-worn wearable
+5. Quantify the heterogeneity across individuals in the response to stress versus amusement
 
 
 
-##### ashley and nathan look at dis for correlation
-
-(Link to paper about multicollinearity with logistic regression, may be useful: https://www-tandfonline-com.proxy.lib.duke.edu/doi/abs/10.1080/09720502.2010.10700699?journalCode=tjim20)
-
-```{r}
-# packages to do all of this
-library(broom)
-library(car)
-library(olsrr)
-library(corrplot)
-library(reshape2)
-
-# loading final df
-final <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/final.csv") %>% 
-  mutate(label = as.factor(label))
-
-# remove columns w NAs, remove subject, remove identifier column X1
-final_na <- final[, colSums(is.na(final)) != nrow(final)] %>% dplyr::select(-subject, -X1)
-
-# basic logistic regression with all variables
-full_model <- glm(label ~ ., data = final_na, family = binomial)
-```
-
-
-```{r}
-# remove label (the amusemet or stress identifier variable) to do correlation analysis
-final_na$label <- NULL
-# rename
-d <- final_na
-# apply correlations
-corr.d <- cor(d, use="pairwise.complete.obs")
-# NAs on the diagonal
-corr.d[ lower.tri( corr.d, diag = TRUE ) ] <- NA
-# plot the correlations (it looks messy)
-corrplot( corr.d, type = "upper", diag = FALSE )
-```
-
-```{r}
-# sort pairs of correlated variables
-m <- melt( corr.d )
-m <- m[order(- abs(m$value)), ]
-# get rid of NAs
-m <- na.omit(m)
-# view the highest correlated: correlation vals > 0.5
-(m[ which( m$value > 0.5 ), ])
-```
-
-is it true? check *eda_sum_response_time_chest* against *eda_sum_response_areas_chest*
-
-```{r}
-modela <- lm(eda_sum_response_time_chest ~ eda_sum_response_areas_chest, data = final)
-summary(modela)
-```
-
-never seen the warning "essentially perfect fit: summary may be unreliable" b4, iconic
 
 
 
@@ -166,211 +133,105 @@ Feature Extraction was performed on the raw signal data, in order to derive impo
 
 ## Exploratory Data Analysis
 
-```{r}
-set.seed(1)
-raw_sampled <- raw_stress_data %>% 
-  filter(subject == "S2") %>%
-  mutate(label = ifelse(label == 2, "stress", "amusement"))
-
-p1 <- raw_sampled %>%
-  mutate(label = as.factor(label)) %>%
-  filter(!is.na(ACC_x)) %>%
-  filter(ACC_x > quantile(ACC_x, probs = 0.25) - (1.5 * IQR(ACC_x)),
-         ACC_x < quantile(ACC_x, probs = 0.75) + (1.5 * IQR(ACC_x))) %>%
-    ggplot(aes(x=X1, y = ACC_x, color = label)) +
-    geom_line() + 
-    theme_classic() +
-    xlab("") + ylab("ACC_X") +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-
-p2 <- raw_sampled %>%
-  mutate(label = as.factor(label)) %>%
-  filter(!is.na(ACC_y)) %>%
-  filter(ACC_y > quantile(ACC_y, probs = 0.25) - (1.5 * IQR(ACC_y)),
-         ACC_y < quantile(ACC_y, probs = 0.75) + (1.5 * IQR(ACC_y))) %>%
-    ggplot(aes(x=time, y = ACC_y, color = label)) +
-    geom_line(alpha = 0.5) + 
-    theme_classic() +
-    xlab("") + ylab("ACC_Y") +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-
-p3 <- raw_sampled %>%
-  mutate(label = as.factor(label)) %>%
-  filter(!is.na(ACC_z)) %>%
-  filter(ACC_z > quantile(ACC_z, probs = 0.25) - (1.5 * IQR(ACC_z)),
-         ACC_z < quantile(ACC_z, probs = 0.75) + (1.5 * IQR(ACC_z))) %>%
-    ggplot(aes(x=X1, y = ACC_z, color = label)) +
-    geom_line() + 
-    theme_classic() +
-    xlab("") + ylab("ACC_Z") +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-
-p4 <- raw_sampled %>%
-  mutate(label = as.factor(label)) %>%
-  filter(!is.na(ECG)) %>%
-  filter(ECG > quantile(ECG, probs = 0.25) - (1.5 * IQR(ECG)),
-         ECG < quantile(ECG, probs = 0.75) + (1.5 * IQR(ECG))) %>%
-    ggplot(aes(x=X1, y = ECG, color = label)) +
-    geom_line() + 
-    theme_classic() +
-    xlab("") + ylab("ECG") +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-
-p5 <- raw_sampled %>%
-  mutate(label = as.factor(label)) %>%
-  filter(!is.na(EMG)) %>%
-  filter(EMG > quantile(EMG, probs = 0.25) - (1.5 * IQR(EMG)),
-         EMG < quantile(EMG, probs = 0.75) + (1.5 * IQR(EMG))) %>%
-    ggplot(aes(x=X1, y = EMG, color = label)) +
-    geom_line() + 
-    theme_classic() +
-    xlab("") + ylab("EMG") +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-
-p6 <- raw_sampled %>%
-  mutate(label = as.factor(label)) %>%
-  filter(!is.na(EDA_y)) %>%
-  filter(EDA_y > quantile(EDA_y, probs = 0.25) - (1.5 * IQR(EDA_y)),
-         EDA_y < quantile(EDA_y, probs = 0.75) + (1.5 * IQR(EDA_y))) %>%
-    ggplot(aes(x=X1, y = EDA_y, color = label)) +
-    geom_line() + 
-    theme_classic() +
-    xlab("") + ylab("EDA_Y") +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-
-p7 <- raw_sampled %>%
-  mutate(label = as.factor(label)) %>%
-  filter(!is.na(Temp)) %>%
-  filter(Temp > quantile(Temp, probs = 0.25) - (1.5 * IQR(Temp)),
-         Temp < quantile(Temp, probs = 0.75) + (1.5 * IQR(Temp))) %>%
-    ggplot(aes(x=X1, y = Temp, color = label)) +
-    geom_line() + 
-    theme_classic() +
-    xlab("") + ylab("Temp") +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-
-p8 <- raw_sampled %>%
-  mutate(label = as.factor(label)) %>%
-  filter(!is.na(Resp)) %>%
-  filter(Resp > quantile(Resp, probs = 0.25) - (1.5 * IQR(Resp)),
-         Resp < quantile(Resp, probs = 0.75) + (1.5 * IQR(Resp))) %>%
-    ggplot(aes(x=X1, y = Resp, color = label)) +
-    geom_line() + 
-    theme_classic() +
-    xlab("") + ylab("Resp") +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-
-p9 <- raw_sampled %>%
-  mutate(label = as.factor(label)) %>%
-  filter(!is.na(BVP)) %>%
-  filter(BVP > quantile(BVP, probs = 0.25) - (1.5 * IQR(BVP)),
-         BVP < quantile(BVP, probs = 0.75) + (1.5 * IQR(BVP))) %>%
-    ggplot(aes(x=X1, y = BVP, color = label)) +
-    geom_line() + 
-    theme_classic() +
-    xlab("") + ylab("BVP") +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-
-# wrist data
-
-w1 <- raw_sampled %>%
-  mutate(label = as.factor(label)) %>%
-  filter(!is.na(EDA_x)) %>%
-  filter(EDA_x > quantile(EDA_x, probs = 0.25) - (1.5 * IQR(EDA_x)),
-         EDA_x < quantile(EDA_x, probs = 0.75) + (1.5 * IQR(EDA_x))) %>%
-    ggplot(aes(x=X1, y = EDA_x, color = label)) +
-    geom_line() + 
-    theme_classic() +
-    xlab("") + ylab("EDA_X") +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-
-cowplot::plot_grid(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, 
-                     ncol = 3, align = 'v', axis = 'lr', label_size = 8) 
 
 
-raw_stress_data$time
-```
 
 
-##### Histograms
 
-```{r}
-hist_plot <- function(person, variable, cuts) {
-  
-  d = get(paste0("S",person,sep=""))
-  
-  p1 <- d[variable] %>%
-    ggplot(aes(x="", y = eval(as.name(variable)))) +
-    geom_boxplot(fill = "lightblue", color = "black") + 
-    coord_flip() +
-    theme_classic() +
-    xlab("") + ylab(variable) +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank())
-  
-  p2 <- d[variable] %>%
-    ggplot() +
-    geom_histogram(aes(x = eval(as.name(variable))), bins = cuts, 
-                   fill = "lightblue") +
-    ylab("Count") + xlab("") +
-    theme_classic()
-  
-  cowplot::plot_grid(p2, p1,
-                     ncol = 1, rel_heights = c(2, 1),
-                     align = 'v', axis = 'lr') 
-} 
 
-p = 2
-v = 100
 
-# can also use lapply
-# hist_plot(person=p, variable="ACC_x", cuts=v)
-# hist_plot(person=p, variable="ACC_y", cuts=v)
-# hist_plot(person=p, variable="ACC_z", cuts=v)
-# hist_plot(person=p, variable="ECG", cuts=v)
-hist_plot(person=p, variable="EMG", cuts=v)
-# hist_plot(person=p, variable="EDA", cuts=v)
-hist_plot(person=p, variable="Temp", cuts=v)
-# hist_plot(person=p, variable="Resp", cuts=v)
-# hist_plot(person=p, variable="BVP", cuts=v)
-# hist_plot(person=p, variable="wr_ACC_x", cuts=v)
-# hist_plot(person=p, variable="wr_ACC_y", cuts=v)
-# hist_plot(person=p, variable="wr_ACC_z", cuts=v)
-hist_plot(person=p, variable="wr_TEMP", cuts=v)
-# hist_plot(person=p, variable="wr_EDA", cuts=v)
-```
 
-#### PCA
 
-```{r}
-library(reticulate)
-py_install("pandas")
-source_python("reading.py")
-pic2 <- read_pickle_file("/Volumes/G-DRIVE mobile/CaseStudy2/WESAD/S2/S2.pkl")
-S2$label <- as.factor(pic2$label)
+
+
+
+
+
+
+
+
+
+### Correlations
+
+```{r correlations, warning=FALSE}
+# remove columns w NAs, remove subject, remove identifier column X1
+final_na <- final[, colSums(is.na(final)) != nrow(final)] %>% dplyr::select(-subject, -X1)
+
+# remove label (the amusemet or stress identifier variable) to do correlation analysis
+final_na$label <- NULL
+# rename
+d <- final_na
+# apply correlations
+zv <- apply(final_na, 2, function(x) length(unique(x)) == 1)
+dfr <- final_na[, !zv]
+n=length(colnames(dfr))
+corr.d <- cor(dfr[,1:n],use="complete.obs")
+# NAs on the diagonal
+corr.d[ lower.tri( corr.d, diag = TRUE ) ] <- NA
+
+# # sort pairs of correlated variables
+# m <- melt(corr.d)
+# m <- m[order(- abs(m$value)), ]
+# # get rid of NAs
+# m <- na.omit(m)
+# # view the highest correlated: correlation vals > 0.75
+# (check <- as.data.frame(m[ which( m$value > 0.80 ), ]))
+
+# plot the correlations (it looks messy)
+corrplot(corr.d, type = "upper", diag = FALSE , method = "color",
+         tl.pos = "td", tl.cex = 0.25)
 ```
 
 ```{r}
-# principle component analysis
-wesad.pca <- prcomp(S2[,c(2:8,10:15)])
-wesad.pca
+# recall corr without the diagonal transformation
+corr.d <- cor(dfr[,1:n],use="complete.obs")
+# determine the variables most important with cutoff at 0.7
+highlyCorrelated <- findCorrelation(corr.d, cutoff=(0.7),verbose = FALSE)
+important_var <- colnames(corr.d[,-highlyCorrelated])
+non_important_var <- colnames(corr.d[,highlyCorrelated])
+
+# recreate the correlation plot
+final_select <- final_na %>%
+  select(c(important_var))
+
+# apply correlations
+zv1 <- apply(final_select, 2, function(x) length(unique(x)) == 1)
+dfr1 <- final_select[, !zv1]
+n=length(colnames(dfr1))
+corr.d1 <- cor(dfr1[,1:n],use="complete.obs")
+# NAs on the diagonal
+corr.d1[ lower.tri( corr.d1, diag = TRUE ) ] <- NA
+
+corrplot(corr.d1, type = "upper", diag = FALSE , method = "color",
+         tl.pos = "td", tl.cex = 0.25,
+         title = "Variables with low correlation (rho 0.7)")
 ```
 
 ```{r}
-library(ggfortify)
-pca.plot <- autoplot(wesad.pca, data = S2, colour = 'label')
-pca.plot
+# recreate the correlation plot
+final_select1 <- final_na %>%
+  select(c(non_important_var))
+
+# apply correlations
+zv1 <- apply(final_select1, 2, function(x) length(unique(x)) == 1)
+dfr1 <- final_select1[, !zv1]
+n=length(colnames(dfr1))
+corr.d12 <- cor(dfr1[,1:n],use="complete.obs")
+# NAs on the diagonal
+corr.d12[ lower.tri( corr.d12, diag = TRUE ) ] <- NA
+
+corrplot(corr.d12, type = "upper", diag = FALSE , method = "color",
+         tl.pos = "td", tl.cex = 0.25)
 ```
+
+
+
+
+
+
+
+
+
 
 
 
@@ -401,16 +262,33 @@ pca.plot
 
 # Methodology
 
-# Results 
+# Results
 
 # Cross-Validation // Sensitivity Analysis(?)
 
-# Conclusion & Limitations 
+# Conclusion & Limitations
 
 # Appendix
 
 
 ## Bibliography
 
+1. Lee, Sang Yup, and Keeheon Lee. “Factors That Influence an Individual's Intention to Adopt a Wearable Healthcare Device: The Case of a Wearable Fitness Tracker.” Technological Forecasting &amp; Social Change, vol. 129, 2018, pp. 154–163., doi:10.1016/j.techfore.2018.01.002.
 
+2. Murphy, Jane Louise, et al. “The Use of Wearable Technology to Measure Energy Expenditure, Physical Activity, and Sleep Patterns in Dementia.” Alzheimer's &amp; Dementia: The Journal of the Alzheimer's Association, vol. 11, no. 7, 2015, pp. P188–P188., doi:10.1016/j.jalz.2015.07.165.
+
+3. Nixon, Jim, and Rebecca Charles. “Understanding the Human Performance Envelope Using Electrophysiological Measures from Wearable Technology.” Cognition, Technology &amp; Work, vol. 19, no. 4, 2017, pp. 655–666., doi:10.1007/s10111-017-0431-5.
+
+4. Prieto, L. P., et al. “Multimodal Teaching Analytics: Automated Extraction of Orchestration Graphs from Wearable Sensor Data.” Journal of Computer Assisted Learning, vol. 34, no. 2, 2018, pp. 193–203., doi:10.1111/jcal.12232. Accessed 29 Sept. 2020. 
+
+5. Jakicic, John M., et al. “Effect of Wearable Technology Combined With a Lifestyle Intervention on Long-Term Weight Loss: The IDEA Randomized Clinical Trial.” JAMA : the Journal of the American Medical Association, vol. 316, no. 11, 2016, pp. 1161–1171., doi:10.1001/jama.2016.12858.
+
+6. Bai, Yang, et al. “Comparative Evaluation of Heart Rate-Based Monitors: Apple Watch vs Fitbit Charge HR.” Journal of Sports Sciences, vol. 36, no. 15, 2017, pp. 1734–1741., doi:10.1080/02640414.2017.1412235.
+
+
+
+
+5. Schmidt, Philip, et al. “Introducing WESAD, a Multimodal Dataset for Wearable Stress and Affect Detection.” Proceedings of the 2018 on International Conference on Multimodal Interaction - ICMI '18, 2018, doi:10.1145/3242969.3242985. 
+
+3. 
 

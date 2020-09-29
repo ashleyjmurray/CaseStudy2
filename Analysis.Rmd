@@ -2,57 +2,249 @@
 title: "Analysis"
 author: "Steven Herrera"
 date: "9/15/2020"
-output: pdf_document
+fontsize: 12pt
+geometry: "left=1.5cm,right=1.5cm,top=1.5cm,bottom=1.5cm"
+output: 
+  pdf_document:
+     latex_engine: xelatex
+     number_sections: true
 ---
+
+```{r package_test, include=FALSE}
+# Validate that all necessary packaged have been downloaded, install otherwise or throw err package DNE
+pkgTest <- function(x) {
+  if (!require(x,character.only = TRUE))
+    {
+    install.packages(x,repos = "http://cran.r-project.org", dep=TRUE)
+    if(!require(x,character.only = TRUE)) stop("Package not found")
+    }
+}
+
+pkgTest("tidyverse")
+pkgTest("cowplot")
+pkgTest("reticulate")
+pkgTest("ggfortify")
+pkgTest("ggplot2")
+pkgTest("dplyr")
+pkgTest("tidyr")
+```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(cowplot)
+library(reticulate)
+library(ggfortify)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+#py_install("pandas")
 ```
 
-Context: N=15 participants with a mean age 27.5 +- 2.4 years; 12 were male and 3 were were female. 
-Goals: Differentiating between states: neutral, stress, and amusement.
-
-#### RespiBAN
-
-RespiBAN: equipped with (700Hz) sensors to measure ACC and RESP; has four "analog ports": ECG, EDA, EMG, and TEMP.
-
-- ECG data was recorded via a standard 3-point ECG.
-
-#### Empatica E4
-
-Empatica E4: worn on non-dominant hand; recorded BVP (64Hz), EDA (4Hz), TEMP (4Hz), & ACC (32Hz).
-
-## Data
-
-```{r imputed-data}
-WESAD_data <- function(directory = "/Volumes/G-DRIVE mobile/CaseStudy2/data/imputed_data/", n) {
-  cur <- paste0(directory, "S", n, ".csv", sep="")
-  return(read_csv(cur))
-}
-
-#takes a while to load
-#unhighlight to run
-
-S2 <- WESAD_data(n=2)
-# S3 <- WESAD_data(n=3)
-# S4 <- WESAD_data(n=4)
-# S5 <- WESAD_data(n=5)
-# S6 <- WESAD_data(n=6)
-# S7 <- WESAD_data(n=7)
-# S8 <- WESAD_data(n=8)
-# S9 <- WESAD_data(n=9)
-# S10 <- WESAD_data(n=10)
-# S11 <- WESAD_data(n=11)
-# S13 <- WESAD_data(n=13)
-# S14 <- WESAD_data(n=14)
-# S15 <- WESAD_data(n=15)
-# S16 <- WESAD_data(n=16)
-# S17 <- WESAD_data(n=17)
+```{r load_data, include=FALSE}
+raw_stress_data <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/amusement_and_stress.csv") %>% 
+  mutate(label = as.factor(label))
+stress_data <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/states_data.csv") %>% 
+  mutate(label = as.factor(label))
 ```
 
-#### Histograms
+# Introduction
+
+Wearable technologies have become increasingly prevalent in recent years, with [citing statistics about how many people wear an Apple watch etc etc]. While these devices are commonly marketed as a valuable communication interface for their users, they also provide a wide array of health monitoring features, such as [examples of health monitoring features and citations]. Health-conscious consumers have increasingly [cite] adopted wearables, with [some %] of consumers citing health monitoring as a primary motivating factor for wearable use. 
+
+Stress is a critical mental and physical health issue affecting all members of the population at some level. It is well-established that stress leads to a number of long-term health conditions, ranging from headaches and sleep issues to an increased risk of cardiovascular disease [WESAD’s citations]. For this reason, researchers have been interested in establishing and interpreting models to predict the affective state of stress using information from wearable devices. [Researcher..] created a [...] model to [...] that achieved [...] results on [...] data. 
+
+A challenge in the detection of stress from wearable data is its physiological similarity to the state of amusement. The two states share [these characteristics], which may be difficult to discern in biological monitoring data. For that reason, this paper will focus on building a model to discern between a state of stress and a state of amusement using the WESAD database. We expand upon previous work by performing more extensive feature engineering, addressing missing data considerations with a K-Nearest Neighbors upsampling strategy, and improving predictive accuracy using a stacking ensemble method.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Data
+
+Raw sensor data was recorded on seventeen subjects that participated in the study. However, data of two of the subjects had to be discarded due to sensor malfunction. The data was recorded for each of the subjects with two different devices: RespiBAN, a chest-worn device, and Empatica E4, a wrist-worn device. Within this data analysis, we focused on the synchronised raw sensor data labels, which was created by subjects performing a double tapping gesture with their non-dominant hand on their chest. In summary, the below predictors were included for each of the subjects in the study:
+
+```{r}
+# display predictors
+```
+
+## Missing Data
+
+
+## Feature Engineering
+
+The raw signal data was subsetted into 100-second rolling windows in Python, referenced in the Appendix (what figure). It was necessary to subset the data into the 100-second windows in order to calculate the features for each of the windows, which is a methodology practiced by (AUTHORS) in the (WESAD PAPER). Additionally, the method of subsetting signal data into windows is performed by Apple when the Apple Watch measures the mean ECG of its users. 100-second windows were chosen because of the necessity to extract features that made sense, as with not enough data, the features extracted would not make sense in the scope of the problem. (i.e. add more about how it wouldn’t make sense intuitively )
+
+#### should we connect what was said about the window stuff (above) with this paragraph?
+
+Feature Extraction was performed on the raw signal data, in order to derive important aspects concerning the data that are often used by medical professionals to evaluate the health of their patients (cite this). Feature extraction was performed for some of the raw sensor data with the Python package neurokit2 (CITE the package), and by Python functions provided in the Appendix with (CITE THIS). 
+
+## Exploratory Data Analysis
+
+```{r}
+set.seed(1)
+raw_sampled <- raw_stress_data %>% 
+  filter(subject == "S2") %>%
+  mutate(label = ifelse(label == 2, "stress", "amusement"))
+
+p1 <- raw_sampled %>%
+  mutate(label = as.factor(label)) %>%
+  filter(!is.na(ACC_x)) %>%
+  filter(ACC_x > quantile(ACC_x, probs = 0.25) - (1.5 * IQR(ACC_x)),
+         ACC_x < quantile(ACC_x, probs = 0.75) + (1.5 * IQR(ACC_x))) %>%
+    ggplot(aes(x=X1, y = ACC_x, color = label)) +
+    geom_line() + 
+    theme_classic() +
+    xlab("") + ylab("ACC_X") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+
+p2 <- raw_sampled %>%
+  mutate(label = as.factor(label)) %>%
+  filter(!is.na(ACC_y)) %>%
+  filter(ACC_y > quantile(ACC_y, probs = 0.25) - (1.5 * IQR(ACC_y)),
+         ACC_y < quantile(ACC_y, probs = 0.75) + (1.5 * IQR(ACC_y))) %>%
+    ggplot(aes(x=time, y = ACC_y, color = label)) +
+    geom_line(alpha = 0.5) + 
+    theme_classic() +
+    xlab("") + ylab("ACC_Y") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+
+p3 <- raw_sampled %>%
+  mutate(label = as.factor(label)) %>%
+  filter(!is.na(ACC_z)) %>%
+  filter(ACC_z > quantile(ACC_z, probs = 0.25) - (1.5 * IQR(ACC_z)),
+         ACC_z < quantile(ACC_z, probs = 0.75) + (1.5 * IQR(ACC_z))) %>%
+    ggplot(aes(x=X1, y = ACC_z, color = label)) +
+    geom_line() + 
+    theme_classic() +
+    xlab("") + ylab("ACC_Z") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+
+p4 <- raw_sampled %>%
+  mutate(label = as.factor(label)) %>%
+  filter(!is.na(ECG)) %>%
+  filter(ECG > quantile(ECG, probs = 0.25) - (1.5 * IQR(ECG)),
+         ECG < quantile(ECG, probs = 0.75) + (1.5 * IQR(ECG))) %>%
+    ggplot(aes(x=X1, y = ECG, color = label)) +
+    geom_line() + 
+    theme_classic() +
+    xlab("") + ylab("ECG") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+
+p5 <- raw_sampled %>%
+  mutate(label = as.factor(label)) %>%
+  filter(!is.na(EMG)) %>%
+  filter(EMG > quantile(EMG, probs = 0.25) - (1.5 * IQR(EMG)),
+         EMG < quantile(EMG, probs = 0.75) + (1.5 * IQR(EMG))) %>%
+    ggplot(aes(x=X1, y = EMG, color = label)) +
+    geom_line() + 
+    theme_classic() +
+    xlab("") + ylab("EMG") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+
+p6 <- raw_sampled %>%
+  mutate(label = as.factor(label)) %>%
+  filter(!is.na(EDA_y)) %>%
+  filter(EDA_y > quantile(EDA_y, probs = 0.25) - (1.5 * IQR(EDA_y)),
+         EDA_y < quantile(EDA_y, probs = 0.75) + (1.5 * IQR(EDA_y))) %>%
+    ggplot(aes(x=X1, y = EDA_y, color = label)) +
+    geom_line() + 
+    theme_classic() +
+    xlab("") + ylab("EDA_Y") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+
+p7 <- raw_sampled %>%
+  mutate(label = as.factor(label)) %>%
+  filter(!is.na(Temp)) %>%
+  filter(Temp > quantile(Temp, probs = 0.25) - (1.5 * IQR(Temp)),
+         Temp < quantile(Temp, probs = 0.75) + (1.5 * IQR(Temp))) %>%
+    ggplot(aes(x=X1, y = Temp, color = label)) +
+    geom_line() + 
+    theme_classic() +
+    xlab("") + ylab("Temp") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+
+p8 <- raw_sampled %>%
+  mutate(label = as.factor(label)) %>%
+  filter(!is.na(Resp)) %>%
+  filter(Resp > quantile(Resp, probs = 0.25) - (1.5 * IQR(Resp)),
+         Resp < quantile(Resp, probs = 0.75) + (1.5 * IQR(Resp))) %>%
+    ggplot(aes(x=X1, y = Resp, color = label)) +
+    geom_line() + 
+    theme_classic() +
+    xlab("") + ylab("Resp") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+
+p9 <- raw_sampled %>%
+  mutate(label = as.factor(label)) %>%
+  filter(!is.na(BVP)) %>%
+  filter(BVP > quantile(BVP, probs = 0.25) - (1.5 * IQR(BVP)),
+         BVP < quantile(BVP, probs = 0.75) + (1.5 * IQR(BVP))) %>%
+    ggplot(aes(x=X1, y = BVP, color = label)) +
+    geom_line() + 
+    theme_classic() +
+    xlab("") + ylab("BVP") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+
+# wrist data
+
+w1 <- raw_sampled %>%
+  mutate(label = as.factor(label)) %>%
+  filter(!is.na(EDA_x)) %>%
+  filter(EDA_x > quantile(EDA_x, probs = 0.25) - (1.5 * IQR(EDA_x)),
+         EDA_x < quantile(EDA_x, probs = 0.75) + (1.5 * IQR(EDA_x))) %>%
+    ggplot(aes(x=X1, y = EDA_x, color = label)) +
+    geom_line() + 
+    theme_classic() +
+    xlab("") + ylab("EDA_X") +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank())
+
+cowplot::plot_grid(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, 
+                     ncol = 3, align = 'v', axis = 'lr', label_size = 8) 
+
+
+raw_stress_data$time
+```
+
+
+##### Histograms
 
 ```{r}
 hist_plot <- function(person, variable, cuts) {
@@ -123,57 +315,6 @@ pca.plot
 ```
 
 
-#### Feature Engineering
-
-
-
-##### EMG (electromyogram) (700Hz only in chest data)
-
-Feature Engineering:
-1. Mean, STD of EMG signal
-2. Dynamic Range
-3. Absolute Integral
-4. Median of the EMG signal
-5. 10th and 90th percentile
-6. Mean, median, and peak: frequency
-7. Energy in seven bands
-8. # peaks
-9. Mean, STD of peak amplitudes
-10. Sum (E) and Normalized Sum (E^) of peak amplitudes
-
-```{r}
-#pic2$signal$chest$EMG
-library(zoo)
-EMG_mean <- c()
-EMG_sd <- c()
-EMG_range <- c()
-
-
-EMG_mean = c(EMG_mean, rollapply(subdata$EMG, 240, mean, fill = NA))
-EMG_sd = c(EMG_sd, rollapply(subdata$EMG, 240, sd, fill = NA))
-EMG_range = c(EMG_range, rollapply(subdata$EMG, 240, get_range, fill = NA))
-
-
-
-ggplot(data = S2, mapping = aes(x))
-
-```
-
-
-
-
-
-
-
-```{r}
-# X1: Sample ID
-# ACC, ECG, EDA, EMG, RESP, TEMP are all RespiBAN CHEST data info
-# Label:  ID of the respective study protocol condition, sampled at 700 Hz
-# ^  0 = not defined / transient, 1 = baseline, 2 = stress, 3 = amusement, 4 = meditation
-# ^  5/6/7 = should be ignored in this dataset
-
-
-```
 
 
 
@@ -186,6 +327,32 @@ ggplot(data = S2, mapping = aes(x))
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Methodology
+
+# Results 
+
+# Cross-Validation // Sensitivity Analysis(?)
+
+# Conclusion & Limitations 
+
+# Appendix
+
+
+## Bibliography
 
 
 

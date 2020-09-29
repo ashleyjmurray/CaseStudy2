@@ -19,7 +19,6 @@ pkgTest <- function(x) {
     if(!require(x,character.only = TRUE)) stop("Package not found")
     }
 }
-
 pkgTest("tidyverse")
 pkgTest("cowplot")
 pkgTest("reticulate")

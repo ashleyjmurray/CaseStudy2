@@ -514,7 +514,7 @@ for col in final.columns:
     print(col, numnas)
     if numnas > 5:
         na_cols.append(col)
-na_cols.extend(["Unnamed: 0"])
+#na_cols.extend(["Unnamed: 0"])
 final = final.drop(columns = na_cols)
 print("Dropped", len(na_cols), "columns")
 

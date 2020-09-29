@@ -287,7 +287,6 @@ corrplot(corr.d12, type = "upper", diag = FALSE , method = "color",
 
 
 
-
 5. Schmidt, Philip, et al. “Introducing WESAD, a Multimodal Dataset for Wearable Stress and Affect Detection.” Proceedings of the 2018 on International Conference on Multimodal Interaction - ICMI '18, 2018, doi:10.1145/3242969.3242985. 
 
 3. 

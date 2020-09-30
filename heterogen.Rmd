@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r echo=FALSE}
 library(dplyr)
+library(tidyverse)
 ```
 
 ```{r final-read}
@@ -62,7 +63,12 @@ final <- final %>%
 ```
 
 ```{r model}
-final_model <- glm(label ~ S2 + S3 + S4 + S5 + S6 + S7 + S11 + S13 + S14 + S15 + S16 + S17 +
+final <- within(final, label <- as.factor(label))
+final <- within(final, label <- relevel(label, ref = 2))
+```
+
+```{r}
+final_model <- glm(label ~ S2 + S3 + S4 + S5 + S6 + S7 + S11 + S13 + S14 + S15 + S16 +
                      HRV_MeanNN +
                    HRV_MeanNN*S2 +
                    HRV_MeanNN*S3 +
@@ -157,7 +163,7 @@ final_model <- glm(label ~ S2 + S3 + S4 + S5 + S6 + S7 + S11 + S13 + S14 + S15 +
                    ie_ratio*S13+
                    ie_ratio*S14+
                    ie_ratio*S15+
-                   ie_ratio*S16
+                   ie_ratio*S16, family = binomial,
                    
                      
                      ,data = final)

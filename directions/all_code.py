@@ -212,19 +212,7 @@ def get_eda_features(eda, sample_rate=700, windex = (0, -1)):
 #the windows are spaced out approximately per 60 seconds. there are some windows that end up smaller than the others,
 #just by the fact that there are not even increments of 60 seconds for both stress and amusement conditions for each of
 #the subjects.
-def create_windows(df, initial_time):
-    indices = []
-    samples = []
-    num_of_separation = 70000
-    samples = []
-    size_of_window = 70000
-    counter = 0
-    while(counter + 70000 <= len(df)):
-        s = sub_stress.loc[counter:counter+70000]
-        samples.append(s)
-    return samples
 
-'''
 def create_windows(df, initial_time):
     indices = []
     samples = []
@@ -254,7 +242,7 @@ def create_windows(df, initial_time):
     if not final_s.empty:
         samples.append(final_s)
     return samples
-  '''
+
     
 #read in the csv file containing only the amusement and stress conditions. this calls the function to create the
 #windows.

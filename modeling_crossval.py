@@ -37,12 +37,12 @@ final["label"].value_counts()
 
 # Determine all subsets of the data on which we want to model
 var_subsets = [
-	#("all",[x for x in final.columns if x != "subject" and x != "label"]),
-	# ("ecg_only",[x for x in final.columns if x.startswith("HRV") or x.startswith("ECG")]),
-	# ("eda_chest", [x for x in final.columns if x.startswith("eda") and x.endswith("chest")]),
-	# ("eda_wrist", [x for x in final.columns if x.startswith("eda") and x.endswith("wr")]),
-	# ("resp_only", ['resp_rate', 'mean_inhale_duration', 'std_inhale_duration', 'mean_exhale_duration', 'std_exhale_duration', 'ie_ratio', 'resp_stretch']),
-	# ("temp_only", [x for x in final.columns if x.startswith("temp")]),
+	("all",[x for x in final.columns if x != "subject" and x != "label"]),
+	("ecg_only",[x for x in final.columns if x.startswith("HRV") or x.startswith("ECG")]),
+	("eda_chest", [x for x in final.columns if x.startswith("eda") and x.endswith("chest")]),
+	("eda_wrist", [x for x in final.columns if x.startswith("eda") and x.endswith("wr")]),
+	("resp_only", ['resp_rate', 'mean_inhale_duration', 'std_inhale_duration', 'mean_exhale_duration', 'std_exhale_duration', 'ie_ratio', 'resp_stretch']),
+	("temp_only", [x for x in final.columns if x.startswith("temp")]),
 	("acc_only", [x for x in final.columns if x.startswith("acc")]),
 	("bvp_only", [x for x in final.columns if x.startswith("bvp")]),
 	("wrist_only", [x for x in final.columns if (x.startswith('eda') and x.endswith('wr')) or x.startswith('acc') or x.startswith('temp') or x.startswith('bvp')]),

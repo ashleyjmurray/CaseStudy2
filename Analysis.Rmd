@@ -77,7 +77,7 @@ Wearable technologies have become increasingly prevalent in recent years, with p
 
 One line of scholarship is focused on the effectiveness of detecting stress through wearable technologies [[8]][Bibliography]. Stress, in our definition, is a critical mental and physical state of health, denoted from a historical understanding of a "general anxiety" [[9]][Bibliography]. It is well-established that stress leads to a number of long-term health conditions, ranging from headaches and sleep issues to an increased risk of cardiovascular disease [[2,5,8]][Bibliography]. For this reason, researchers have been interested in establishing and interpreting models to predict the affective state of stress using information from wearable devices [[8]][Bibliography].
 
-A challenge in the detection of stress from wearable data is its physiological similarity to the state of amusement [[10]][Bibliography]. The two states share physiological responses to stimuli that trigger a mixture of hormones like cortisol and adrenaline, thus increasing heart rate and muscle tension [[3,8]][Bibliography], which may be difficult to discern in biological monitoring data [[11]][Bibliography]. For that reason, this paper will focus on building a model to discern between a state of stress and a state of amusement using the WESAD database [[8]][Bibliography], which used the **RespiBAN Professional** chest-device and **Empatica E4** wrist-device to collect sensor data. We expand upon previous work by performing more extensive feature engineering, addressing missing data considerations with a K-Nearest Neighbors upsampling strategy, and improving predictive accuracy using a stacking ensemble method. In addition to determining whether the engineered features in discriminating between stress and amusement were *useful*, we also want to answer *how* they were useful, which ones were *most* useful, if detecting between the states is effective using only the **Empatica E4** data, and a quantified analysis of the heterogeneity across individuals in the dataset.
+A challenge in the detection of stress from wearable data is its physiological similarity to the state of amusement [[10]][Bibliography]. The two states share physiological responses to stimuli that trigger a mixture of hormones like cortisol and adrenaline, thus increasing heart rate and muscle tension [[3,8]][Bibliography], which may be difficult to discern in biological monitoring data [[11]][Bibliography]. For that reason, this paper will focus on building a model to discern between a state of stress and a state of amusement using the WESAD database [[8]][Bibliography], which used the **RespiBAN Professional** chest-device and **Empatica E4** wrist-device to collect sensor data. We expand upon previous work by performing more extensive feature extraction, addressing missing data considerations with a K-Nearest Neighbors upsampling strategy, and improving predictive accuracy using a stacking ensemble method. In addition to determining whether the engineered features in discriminating between stress and amusement were *useful*, we also want to answer *how* they were useful, which ones were *most* useful, if detecting between the states is effective using only the **Empatica E4** data, and a quantified analysis of the heterogeneity across individuals in the dataset.
 
 # Data
 
@@ -87,13 +87,13 @@ Raw sensor data was recorded on seventeen subjects that participated in the stud
 
 ## Feature Extraction
 
-Feature extraction 
+Additional feature extraction was performed on the raw signal data in order to derive important aspects of the data. We did this using the Python package **neurokit2** [[12]][Bibliography]. The process for calculating these features uses rolling subsetted windows, and this accomodates downsampling concerns since we aren't lowering the sampling rate of the raw signals that were sampled at a higher frequency.
 
-was performed on the raw signal data in order to derive important aspects concerning the data that are often used by medical professionals to evaluate the health of their patients (cite this). Feature extraction was performed for some of the raw sensor data with the Python package neurokit2 (CITE the package), and by Python functions provided in the Appendix with (CITE THIS).
+We subsetted the raw signal data into 100-second rolling windows in Python. It was necessary to subset the data into the 100-second windows in order to calculate the features for each of the windows, which is a methodology practiced by Schmidt et al. (2018) [[12]][Bibliography]. 
 
-Rather than downsampling and lowering the sampling rate of the raw signals that were sampled at a higher frequency, we performed feature extraction using rolling subsetted windows.
 
-The raw signal data was subsetted into 100-second rolling windows in Python, referenced in the Appendix (what figure). It was necessary to subset the data into the 100-second windows in order to calculate the features for each of the windows, which is a methodology practiced by (AUTHORS) in the (WESAD PAPER). Additionally, the method of subsetting signal data into windows is performed by Apple when the Apple Watch measures the mean ECG of its users. 100-second windows were chosen because of the necessity to extract features that made sense, as with not enough data, the features extracted would not make sense in the scope of the problem. (i.e. add more about how it wouldn’t make sense intuitively )
+EDIT THIS:
+We chose 100-second windows because of the necessity to extract features that made sense, as with not enough data, the features extracted would not make sense in the scope of the problem. (i.e. add more about how it wouldn’t make sense intuitively )
 
 ```{r}
 data_table %>%
@@ -109,112 +109,7 @@ data_table %>%
 ```
 
 
-
-
-#### should we connect what was said about the window stuff (above) with this paragraph?
-
-Feature Extraction was performed on the raw signal data, in order to derive important aspects concerning the data that are often used by medical professionals to evaluate the health of their patients (cite this). Feature extraction was performed for some of the raw sensor data with the Python package neurokit2 (CITE the package), and by Python functions provided in the Appendix with (CITE THIS). 
-
 ## Exploratory Data Analysis
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Correlations
-
-```{r correlations, warning=FALSE}
-# remove columns w NAs, remove subject, remove identifier column X1
-final_na <- final[, colSums(is.na(final)) != nrow(final)] %>% dplyr::select(-subject, -X1)
-
-# remove label (the amusemet or stress identifier variable) to do correlation analysis
-final_na$label <- NULL
-# rename
-d <- final_na
-# apply correlations
-zv <- apply(final_na, 2, function(x) length(unique(x)) == 1)
-dfr <- final_na[, !zv]
-n=length(colnames(dfr))
-corr.d <- cor(dfr[,1:n],use="complete.obs")
-# NAs on the diagonal
-corr.d[ lower.tri( corr.d, diag = TRUE ) ] <- NA
-
-# # sort pairs of correlated variables
-# m <- melt(corr.d)
-# m <- m[order(- abs(m$value)), ]
-# # get rid of NAs
-# m <- na.omit(m)
-# # view the highest correlated: correlation vals > 0.75
-# (check <- as.data.frame(m[ which( m$value > 0.80 ), ]))
-
-# plot the correlations (it looks messy)
-corrplot(corr.d, type = "upper", diag = FALSE , method = "color",
-         tl.pos = "td", tl.cex = 0.25)
-```
-
-```{r}
-# recall corr without the diagonal transformation
-corr.d <- cor(dfr[,1:n],use="complete.obs")
-# determine the variables most important with cutoff at 0.7
-highlyCorrelated <- findCorrelation(corr.d, cutoff=(0.7),verbose = FALSE)
-important_var <- colnames(corr.d[,-highlyCorrelated])
-non_important_var <- colnames(corr.d[,highlyCorrelated])
-
-# recreate the correlation plot
-final_select <- final_na %>%
-  select(c(important_var))
-
-# apply correlations
-zv1 <- apply(final_select, 2, function(x) length(unique(x)) == 1)
-dfr1 <- final_select[, !zv1]
-n=length(colnames(dfr1))
-corr.d1 <- cor(dfr1[,1:n],use="complete.obs")
-# NAs on the diagonal
-corr.d1[ lower.tri( corr.d1, diag = TRUE ) ] <- NA
-
-corrplot(corr.d1, type = "upper", diag = FALSE , method = "color",
-         tl.pos = "td", tl.cex = 0.25)
-```
-
-```{r}
-# recreate the correlation plot
-final_select1 <- final_na %>%
-  select(c(non_important_var))
-
-# apply correlations
-zv1 <- apply(final_select1, 2, function(x) length(unique(x)) == 1)
-dfr1 <- final_select1[, !zv1]
-n=length(colnames(dfr1))
-corr.d12 <- cor(dfr1[,1:n],use="complete.obs")
-# NAs on the diagonal
-corr.d12[ lower.tri( corr.d12, diag = TRUE ) ] <- NA
-
-corrplot(corr.d12, type = "upper", diag = FALSE , method = "color",
-         tl.pos = "td", tl.cex = 0.25)
-```
-
-
-
-
-
-
-
-
-
 
 
 
@@ -278,5 +173,87 @@ corrplot(corr.d12, type = "upper", diag = FALSE , method = "color",
 
 11. Schmidt, Philip, et al. “Labelling Affective States ‘in the Wild.’” Proceedings of the 2018 ACM International Joint Conference and 2018 International Symposium on Pervasive and Ubiquitous Computing and Wearable Computers - UbiComp '18, 2018, doi:10.1145/3267305.3267551. 
 
+12. Makowski, D., Pham, T., Lau, Z. J., Brammer, J. C., Lesspinasse, F., Pham, H., Schölzel, C., & S H Chen, A. (2020). NeuroKit2: A Python Toolbox for Neurophysiological Signal Processing. Retrieved March 28, 2020, from https://github.com/neuropsychology/NeuroKit.
 
 
+## Additional EDA
+
+Table of most correlated engineered features ($\rho > 0.7$):
+
+```{r correlations, warning=FALSE}
+# remove columns w NAs, remove subject, remove identifier column X1
+final_na <- final[, colSums(is.na(final)) != nrow(final)] %>% dplyr::select(-subject, -X1)
+
+# remove label (the amusemet or stress identifier variable) to do correlation analysis
+final_na$label <- NULL
+# rename
+d <- final_na
+# apply correlations
+zv <- apply(final_na, 2, function(x) length(unique(x)) == 1)
+dfr <- final_na[, !zv]
+n=length(colnames(dfr))
+corr.d <- cor(dfr[,1:n],use="complete.obs")
+# NAs on the diagonal
+corr.d[ lower.tri( corr.d, diag = TRUE ) ] <- NA
+
+# sort pairs of correlated variables
+m <- melt(corr.d)
+m <- m[order(- abs(m$value)), ]
+# get rid of NAs
+m <- na.omit(m)
+# view the highest correlated: correlation vals > 0.7
+(check <- as.data.frame(m[ which( m$value > 0.7 ), ]))
+```
+
+Correlation plot with all engineered features:
+
+```{r}
+# plot the correlations
+corrplot(corr.d, type = "upper", diag = FALSE , method = "color",
+         tl.pos = "td", tl.cex = 0.25)
+```
+
+Correlation plot with least correlated engineered features ($\rho < 0.7$):
+
+```{r}
+# recall corr without the diagonal transformation
+corr.d <- cor(dfr[,1:n],use="complete.obs")
+# determine the variables most important with cutoff at 0.7
+highlyCorrelated <- findCorrelation(corr.d, cutoff=(0.7),verbose = FALSE)
+important_var <- colnames(corr.d[,-highlyCorrelated])
+non_important_var <- colnames(corr.d[,highlyCorrelated])
+
+# recreate the correlation plot
+final_select <- final_na %>%
+  select(c(important_var))
+
+# apply correlations
+zv1 <- apply(final_select, 2, function(x) length(unique(x)) == 1)
+dfr1 <- final_select[, !zv1]
+n=length(colnames(dfr1))
+corr.d1 <- cor(dfr1[,1:n],use="complete.obs")
+# NAs on the diagonal
+corr.d1[ lower.tri( corr.d1, diag = TRUE ) ] <- NA
+
+corrplot(corr.d1, type = "upper", diag = FALSE , method = "color",
+         tl.pos = "td", tl.cex = 0.25)
+```
+
+Correlation plot with most correlated engineered features ($\rho > 0.7$):
+
+```{r}
+# recreate the correlation plot
+final_select1 <- final_na %>%
+  select(c(non_important_var))
+
+# apply correlations
+zv1 <- apply(final_select1, 2, function(x) length(unique(x)) == 1)
+dfr1 <- final_select1[, !zv1]
+n=length(colnames(dfr1))
+corr.d12 <- cor(dfr1[,1:n],use="complete.obs")
+# NAs on the diagonal
+corr.d12[ lower.tri( corr.d12, diag = TRUE ) ] <- NA
+
+corrplot(corr.d12, type = "upper", diag = FALSE , method = "color",
+         tl.pos = "td", tl.cex = 0.25)
+```

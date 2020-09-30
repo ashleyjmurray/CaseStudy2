@@ -303,7 +303,7 @@ corrplot(corr.d1, type = "upper", diag = FALSE , method = "color",
          tl.pos = "td", tl.cex = 0.25)
 ```
 
-Correlation plot with most correlated engineered features ($\rho > 0.7$):
+Correlation plot with most correlated engineered features ($\rho > 0.7$): 
 
 ```{r}
 # recreate the correlation plot

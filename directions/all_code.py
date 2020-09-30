@@ -230,7 +230,7 @@ def create_windows(df, initial_time):
         samples.append(s)
         temp = int(indices[x+1] - indices[x])
         #temp_2 = int(temp/2)
-        temp_2 = 1
+        temp_2 = 700
         if temp_2 + indices[x] <= len(df):
             ss = df.loc[temp_2+indices[x] - num_of_separation:temp_2+indices[x]]
             samples.append(ss)

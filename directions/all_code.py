@@ -216,6 +216,19 @@ def create_windows(df, initial_time):
     indices = []
     samples = []
     num_of_separation = 70000
+    samples = []
+    size_of_window = 70000
+    counter = 0
+    while(counter + 70000 <= len(df)):
+        s = sub_stress.loc[counter:counter+70000]
+        samples.append(s)
+    return samples
+
+'''
+def create_windows(df, initial_time):
+    indices = []
+    samples = []
+    num_of_separation = 70000
     length = math.floor(len(df) / num_of_separation) #70,000 == 100 second windows. 10500 = 15 second windows
     counter = 0
     while(length != 0):
@@ -229,7 +242,8 @@ def create_windows(df, initial_time):
         s = df.loc[indices[x]:indices[x+1]]
         samples.append(s)
         temp = int(indices[x+1] - indices[x])
-        temp_2 = int(temp/2)
+        #temp_2 = int(temp/2)
+        temp_2 = 700
         if temp_2 + indices[x] <= len(df):
             ss = df.loc[temp_2+indices[x] - num_of_separation:temp_2+indices[x]]
             samples.append(ss)
@@ -240,6 +254,7 @@ def create_windows(df, initial_time):
     if not final_s.empty:
         samples.append(final_s)
     return samples
+  '''
     
 #read in the csv file containing only the amusement and stress conditions. this calls the function to create the
 #windows.

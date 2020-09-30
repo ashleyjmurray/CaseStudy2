@@ -1,0 +1,11 @@
+﻿Variable,Description,Coefficient
+HRV_MedianNN,Median of the absolute values of the successive differences between RR intervals,-5.608500261
+HRV_MeanNN,Mean of the RR intervals,-5.552905069
+ECG_Rate_Mean,Mean of heart rate interpolated between R-peaks,3.655297559
+eda_slope_wr,Slope (wrist-data only),-3.126710291
+eda_sum_startle_mag_chest,Sum of skin conductance response amplitudes (chest-data only),3.082901957
+subject_S13,Participant ID 13,-2.94248379
+HRV_MCVNN,Median-based coefficient of variation (madNN/medianNN),2.874544062
+HRV_LnHF,Log-transformed heart rate frequency,2.750963476
+HRV_pNN20,Interval differences of RR intervals greater than 20 ms divided by total RR intervals,2.467211176
+eda_num_scr_seg_chest,Number of skin conductance response onsets (chest-data only),-2.466902569

@@ -1,0 +1,8 @@
+ECG (mV),Mean(HR*) | HRV* time- & frequency-domain measures | HRV non-linear measures,54
+EDA (mu-s),Mean | STD | Min | Max | Slope | Range | SCL* | SCR*,14
+TEMP (C°),Mean | STD | 10th Quantile | 90th Quantile | Range,5
+RESP (%),Rate | Mean(IHD*) | STD(IHD) | Mean(EHD*) | STD(EHD) | IHD/EHD | Stretch,7
+BVP (PPG),Mean | STD | 10th Quantile | 90th Quantile | Range,5
+EDA (mu-s),Mean | STD | Min | Max | Slope | Range | SCL | SCR,14
+TEMP (C°),Mean | STD | 10th Quantile | 90th Quantile | Range,5
+ACC (g),Mean(X) | Mean(Y) | Mean(Z) | SQRT,4

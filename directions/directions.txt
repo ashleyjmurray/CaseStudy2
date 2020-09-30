@@ -25,4 +25,9 @@
 This will result in the calculated models and also "final.csv" in your directory. final.csv is the result of feature extraction for the windows created from the
 raw sensor data. You will you final.csv for part (iii), calculating the heterogenity. This can be completed in the following steps:
 
-1. 
+1. Submit the job:
+
+    sbatch submit_r_job.sh
+    
+2. Run cat-job#.out in your terminal after it finishes running. You should be able to see the summary of the logistic model testing heterogenity as described in 
+the .PDF document. 

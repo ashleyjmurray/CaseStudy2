@@ -39,6 +39,11 @@ final <- final %>%
 final <- final %>%
   select(-subject)
 
+final$label <- as.factor(final$label)
+
+final <- within(final, label <- as.factor(label))
+final <- within(final, label <- relevel(label, ref = 2))
+
 
 final_model <- glm(label ~ S2 + S3 + S4 + S5 + S6 + S7 + S11 + S13 + S14 + S15 \
 + S16 +

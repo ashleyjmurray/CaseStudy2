@@ -137,8 +137,7 @@ HRV_MeanNN +
                    ie_ratio*S15+
                    ie_ratio*S16, family = binomial,
                    
-                     
-                     ,data = final)
+               data = final)
                      
 summary(final_model)
 

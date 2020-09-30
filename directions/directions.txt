@@ -31,3 +31,9 @@ raw sensor data. You will you final.csv for part (iii), calculating the heteroge
     
 2. Run cat-slurm-job#.out in your terminal after it finishes running. You should be able to see the summary of the logistic model testing heterogenity as described in 
 the .PDF document. 
+
+For the other two reproducibility tasks: 
+
+1. After submit_job.sh runs, classification accuracy for the first goal is outputted in the file "model_results_all.csv". Each row gives the CV accuracy and F1 score for each model, trained on all the data.
+
+2. Classification accuracy for the fourth goal is outputted in the file "model_results_wrist_only.csv".

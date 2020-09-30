@@ -1,7 +1,6 @@
 ---
 title: "Analysis"
-author: "Steven Herrera"
-date: "9/15/2020"
+author: "Steven Herrera Tenorio, Ashley Murray, Nathan O'Hara"
 fontsize: 12pt
 geometry: "left=1.5cm,right=1.5cm,top=1.5cm,bottom=1.5cm"
 output: 
@@ -35,6 +34,7 @@ pkgTest("caret")
 pkgTest("gridExtra")
 pkgTest("gridGraphics")
 pkgTest("grid")
+pkgTest("kableExtra")
 ```
 
 ```{r setup, include=FALSE}
@@ -58,74 +58,58 @@ library(caret)
 library(gridExtra)
 library(gridGraphics)
 library(grid)
+library(kableExtra)
 #py_install("pandas")
 ```
 
 ```{r load_data, include=FALSE}
-raw_stress_data <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/amusement_and_stress.csv") %>% 
-  mutate(label = as.factor(label))
+#raw_stress_data <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/amusement_and_stress.csv") %>% 
+  #mutate(label = as.factor(label))
 final <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/final.csv") %>% 
   mutate(label = as.factor(label))
+data_table <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/data_table.csv", 
+                       col_names = c("Sensor", "Features", "Count"))
 ```
 
 # Introduction
 
-Wearable technologies have become increasingly prevalent in recent years, with public interest taking note of the accessibility, health interests, and innovativeness [[1]][Bibliography], especially with products such as the Apple Watch. While these devices are commonly marketed as a valuable communication interface for their users, they also provide a wide array of health monitoring features, such as electrocardiography (ECG) [[2]][Bibliography], heart rate variability (HRV) [[3]][Bibliography], and accelerometry (ACC) [[4]][Bibliography]. Health-conscious consumers have increasingly [[1,5,6]][Bibliography] adopted wearables, with [some %] of consumers citing health monitoring as a primary motivating factor for wearable use. 
+Wearable technologies have become increasingly prevalent in recent years, with public interest taking note of the accessibility, health interests, and innovation [[1]][Bibliography], especially with products such as the Apple Watch. While these devices are commonly marketed as a valuable communication interface for their users, they also provide a wide array of health monitoring features, such as electrocardiography (ECG) [[2]][Bibliography], heart rate variability (HRV) [[3]][Bibliography], and accelerometry (ACC) [[4]][Bibliography]. Therefore, health-conscious consumers have increasingly adopted wearables [[1,5,6]][Bibliography]. For example, in a study exploring consumers' health beliefs and percieved usefulness of wearable healthcare technology, Cheung et al. (2019) found that consumers cite health information accuracy as a primary motivating factor for wearable use [[7]][Bibliography].
 
+One line of scholarship is focused on the effectiveness of detecting stress through wearable technologies [[8]][Bibliography]. Stress, in our definition, is a critical mental and physical state of health, denoted from a historical understanding of a "general anxiety" [[9]][Bibliography]. It is well-established that stress leads to a number of long-term health conditions, ranging from headaches and sleep issues to an increased risk of cardiovascular disease [[2,5,8]][Bibliography]. For this reason, researchers have been interested in establishing and interpreting models to predict the affective state of stress using information from wearable devices [[8]][Bibliography].
 
-
-[citing statistics about how many people wear an Apple watch etc etc] 
-
-Stress is a critical mental and physical health issue affecting all members of the population at some level. It is well-established that stress leads to a number of long-term health conditions, ranging from headaches and sleep issues to an increased risk of cardiovascular disease [[2]][Bibliography]. 
-
-For this reason, researchers have been interested in establishing and interpreting models to predict the affective state of stress using information from wearable devices. [Researcher..] created a [...] model to [...] that achieved [...] results on [...] data. 
-
-A challenge in the detection of stress from wearable data is its physiological similarity to the state of amusement. The two states share [these characteristics], which may be difficult to discern in biological monitoring data. For that reason, this paper will focus on building a model to discern between a state of stress and a state of amusement using the WESAD database. We expand upon previous work by performing more extensive feature engineering, addressing missing data considerations with a K-Nearest Neighbors upsampling strategy, and improving predictive accuracy using a stacking ensemble method.
-
-
-1. Determine whether sensor data are useful in discriminating between stress and amusement conditions
-2. If sensor data are useful in discriminating between stress and amusement, describe how (e.g., is higher blood pressure related to a greater likelihood of stress vs amusement)
-3. Determine which types of sensor data are most useful in discriminating between stress and amusement, alone or in combination
-4. Determine whether we can detect stress (vs amusement) only using the wrist-worn wearable
-5. Quantify the heterogeneity across individuals in the response to stress versus amusement
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+A challenge in the detection of stress from wearable data is its physiological similarity to the state of amusement [[10]][Bibliography]. The two states share physiological responses to stimuli that trigger a mixture of hormones like cortisol and adrenaline, thus increasing heart rate and muscle tension [[3,8]][Bibliography], which may be difficult to discern in biological monitoring data [[11]][Bibliography]. For that reason, this paper will focus on building a model to discern between a state of stress and a state of amusement using the WESAD database [[8]][Bibliography], which used the **RespiBAN Professional** chest-device and **Empatica E4** wrist-device to collect sensor data. We expand upon previous work by performing more extensive feature engineering, addressing missing data considerations with a K-Nearest Neighbors upsampling strategy, and improving predictive accuracy using a stacking ensemble method. In addition to determining whether the engineered features in discriminating between stress and amusement were *useful*, we also want to answer *how* they were useful, which ones were *most* useful, if detecting between the states is effective using only the **Empatica E4** data, and a quantified analysis of the heterogeneity across individuals in the dataset.
 
 # Data
 
-Raw sensor data was recorded on seventeen subjects that participated in the study. However, data of two of the subjects had to be discarded due to sensor malfunction. The data was recorded for each of the subjects with two different devices: RespiBAN, a chest-worn device, and Empatica E4, a wrist-worn device. Within this data analysis, we focused on the synchronised raw sensor data labels, which was created by subjects performing a double tapping gesture with their non-dominant hand on their chest. In summary, the below predictors were included for each of the subjects in the study:
+## Description
 
-```{r}
-# display predictors
-```
+Raw sensor data was recorded on seventeen subjects that participated in the study. However, data of two of the subjects had to be discarded due to sensor malfunction. The data was recorded for each of the subjects with two different devices: RespiBAN, a chest-worn device, and Empatica E4, a wrist-worn device. Within this data analysis, we focused on the synchronised raw sensor data labels, which was created by subjects performing a double tapping gesture with their non-dominant hand on their chest.
 
-## Missing Data
+## Feature Extraction
 
+Feature extraction 
 
-## Feature Engineering
+was performed on the raw signal data in order to derive important aspects concerning the data that are often used by medical professionals to evaluate the health of their patients (cite this). Feature extraction was performed for some of the raw sensor data with the Python package neurokit2 (CITE the package), and by Python functions provided in the Appendix with (CITE THIS).
+
+Rather than downsampling and lowering the sampling rate of the raw signals that were sampled at a higher frequency, we performed feature extraction using rolling subsetted windows.
 
 The raw signal data was subsetted into 100-second rolling windows in Python, referenced in the Appendix (what figure). It was necessary to subset the data into the 100-second windows in order to calculate the features for each of the windows, which is a methodology practiced by (AUTHORS) in the (WESAD PAPER). Additionally, the method of subsetting signal data into windows is performed by Apple when the Apple Watch measures the mean ECG of its users. 100-second windows were chosen because of the necessity to extract features that made sense, as with not enough data, the features extracted would not make sense in the scope of the problem. (i.e. add more about how it wouldn’t make sense intuitively )
+
+```{r}
+data_table %>%
+  kableExtra::kable(booktabs = T,
+                    caption = "Feature Engineering with the WESAD Sensor Data",
+                    col.names = c("Sensors", "Features", "# of features")) %>%
+  kable_styling(latex_options = c("hold_position")) %>%
+  kable_styling(font_size = 9) %>%
+  pack_rows("RespiBAN Professional", 1, 4) %>%
+  pack_rows("Empatica E4", 5, 8) %>%
+  footnote(symbol = "HR/V = Heart rate/variability | SCL/R = Skin conductance level/response | I/EHD = Inhale/exhale duration") %>% 
+  row_spec(0, bold = TRUE)
+```
+
+
+
 
 #### should we connect what was said about the window stuff (above) with this paragraph?
 
@@ -203,8 +187,7 @@ corr.d1 <- cor(dfr1[,1:n],use="complete.obs")
 corr.d1[ lower.tri( corr.d1, diag = TRUE ) ] <- NA
 
 corrplot(corr.d1, type = "upper", diag = FALSE , method = "color",
-         tl.pos = "td", tl.cex = 0.25,
-         title = "Variables with low correlation (rho 0.7)")
+         tl.pos = "td", tl.cex = 0.25)
 ```
 
 ```{r}
@@ -285,9 +268,15 @@ corrplot(corr.d12, type = "upper", diag = FALSE , method = "color",
 
 6. Bai, Yang, et al. “Comparative Evaluation of Heart Rate-Based Monitors: Apple Watch vs Fitbit Charge HR.” Journal of Sports Sciences, vol. 36, no. 15, 2017, pp. 1734–1741., doi:10.1080/02640414.2017.1412235.
 
+7. Cheung, Man Lai, et al. “Examining Consumers’ Adoption of Wearable Healthcare Technology: The Role of Health Attributes.” International Journal of Environmental Research and Public Health, vol. 16, no. 13, 2019, p. 2257., doi:10.3390/ijerph16132257.
+
+8. Schmidt, Philip, et al. “Introducing WESAD, a Multimodal Dataset for Wearable Stress and Affect Detection.” Proceedings of the 2018 on International Conference on Multimodal Interaction - ICMI '18, 2018, doi:10.1145/3242969.3242985. 
+
+9. Abbott, Andrew. “Positivism and Interpretation in Sociology: Lessons for Sociologists from the History of Stress Research.” Sociological Forum (Randolph, N.J.), vol. 5, no. 3, 1990, pp. 435–458., doi:10.1007/BF01115095.
+
+10. Schmidt, Philip, et al. “Wearable-Based Affect Recognition—A Review.” Sensors, vol. 19, no. 19, 2019, p. 4079., doi:10.3390/s19194079. 
+
+11. Schmidt, Philip, et al. “Labelling Affective States ‘in the Wild.’” Proceedings of the 2018 ACM International Joint Conference and 2018 International Symposium on Pervasive and Ubiquitous Computing and Wearable Computers - UbiComp '18, 2018, doi:10.1145/3267305.3267551. 
 
 
-5. Schmidt, Philip, et al. “Introducing WESAD, a Multimodal Dataset for Wearable Stress and Affect Detection.” Proceedings of the 2018 on International Conference on Multimodal Interaction - ICMI '18, 2018, doi:10.1145/3242969.3242985. 
-
-3. 
 

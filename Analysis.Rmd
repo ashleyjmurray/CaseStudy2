@@ -69,6 +69,8 @@ final <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/final.csv") %>%
   mutate(label = as.factor(label))
 data_table <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/data_table.csv", 
                        col_names = c("Sensor", "Features", "Count"))
+accuracy_table <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/accuracy_table.csv")
+full_accuracy_table <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/full_accuracy_table.csv")
 ```
 
 # Introduction
@@ -108,27 +110,12 @@ data_table %>%
   row_spec(0, bold = TRUE)
 ```
 
-
 ## Exploratory Data Analysis
 
 
+```{r}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
 
@@ -142,7 +129,35 @@ data_table %>%
 
 # Results
 
-# Cross-Validation // Sensitivity Analysis(?)
+```{r}
+accuracy_table %>%
+  kableExtra::kable(booktabs = T,
+                    caption = "Accuracy and F1 Scores for Sensor Data",
+                    col.names = c("", "Accuracy", "F1 Score",
+                                  "Accuracy", "F1 Score",
+                                  "Accuracy", "F1 Score",
+                                  "Accuracy", "F1 Score",
+                                  "Accuracy", "F1 Score",
+                                  "Accuracy", "F1 Score")) %>%
+  kable_styling(latex_options = c("hold_position")) %>%
+  kable_styling(font_size = 9) %>%
+  add_header_above(c(" "= 1, "ACC" = 2, "BVP" = 2, "ECG" = 2, 
+                     "EDA (Chest)" = 2, "EDA (Wrist)" = 2, "RESP" = 2))
+```
+
+
+```{r}
+full_accuracy_table %>%
+  kableExtra::kable(booktabs = T,
+                    caption = "Accuracy and F1 Scores for Devices",
+                    col.names = c("", "Accuracy", "F1 Score",
+                                  "Accuracy", "F1 Score",
+                                  "Accuracy", "F1 Score")) %>%
+  kable_styling(latex_options = c("hold_position")) %>%
+  kable_styling(font_size = 9) %>%
+  add_header_above(c(" "= 1, "All Variables" = 2, "Chest Sensor Data" = 2, "Wrist Sensor Data" = 2))
+```
+
 
 # Conclusion & Limitations
 
@@ -178,7 +193,7 @@ data_table %>%
 
 ## Additional EDA
 
-Table of most correlated engineered features ($\rho > 0.7$):
+Table of 10 most correlated engineered features ($\rho > 0.7$):
 
 ```{r correlations, warning=FALSE}
 # remove columns w NAs, remove subject, remove identifier column X1
@@ -202,7 +217,7 @@ m <- m[order(- abs(m$value)), ]
 # get rid of NAs
 m <- na.omit(m)
 # view the highest correlated: correlation vals > 0.7
-(check <- as.data.frame(m[ which( m$value > 0.7 ), ]))
+(check <- as.data.frame(m[ which( m$value > 0.7 ), ]) %>% head(10))
 ```
 
 Correlation plot with all engineered features:

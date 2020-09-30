@@ -21,3 +21,8 @@
 6. Submit the job:
 
     sbatch submit_job.sh
+
+This will result in the calculated models and also "final.csv" in your directory. final.csv is the result of feature extraction for the windows created from the
+raw sensor data. You will you final.csv for part (iii), calculating the heterogenity. This can be completed in the following steps:
+
+1. 

@@ -29,5 +29,5 @@ raw sensor data. You will you final.csv for part (iii), calculating the heteroge
 
     sbatch submit_r_job.sh
     
-2. Run cat-job#.out in your terminal after it finishes running. You should be able to see the summary of the logistic model testing heterogenity as described in 
+2. Run cat-slurm-job#.out in your terminal after it finishes running. You should be able to see the summary of the logistic model testing heterogenity as described in 
 the .PDF document. 

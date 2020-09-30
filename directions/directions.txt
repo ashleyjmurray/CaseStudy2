@@ -37,3 +37,8 @@ For the other two reproducibility tasks:
 1. After submit_job.sh runs, classification accuracy for the first goal is outputted in the file "model_results_all.csv". Each row gives the CV accuracy and F1 score for each model, trained on all the data.
 
 2. Classification accuracy for the fourth goal is outputted in the file "model_results_wrist_only.csv".
+
+---
+
+NOTE: Model parameters were determined via 15-fold cross validation. In this module, they are precomputed for your convenience in reproducing. To see the full cross validation process, see: https://github.com/ashleyjmurray/CaseStudy2/blob/master/modeling_crossval.py
+

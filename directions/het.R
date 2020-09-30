@@ -30,6 +30,7 @@ final <- final %>%
          S15 = as.factor(case_when(subject == 'S15' ~ 1,
                         TRUE ~ 0)),
          S16 = as.factor(case_when(subject == 'S16' ~ 1,
+                      TRUE ~ 0)),
          
          S17 = as.factor(case_when(subject == 'S17' ~ 1,
                         TRUE ~ 0))

@@ -79,23 +79,23 @@ Wearable technologies have become increasingly prevalent in recent years, with p
 
 One line of scholarship is focused on the effectiveness of detecting stress through wearable technologies [[8]][Bibliography]. Stress, in our definition, is a critical mental and physical state of health, denoted from a historical understanding of a "general anxiety" [[9]][Bibliography]. It is well-established that stress leads to a number of long-term health conditions, ranging from headaches and sleep issues to an increased risk of cardiovascular disease [[2,5,8]][Bibliography]. For this reason, researchers have been interested in establishing and interpreting models to predict the affective state of stress using information from wearable devices [[8]][Bibliography].
 
-A challenge in the detection of stress from wearable data is its physiological similarity to the state of amusement [[10]][Bibliography]. The two states share physiological responses to stimuli that trigger a mixture of hormones like cortisol and adrenaline, thus increasing heart rate and muscle tension [[3,8]][Bibliography], which may be difficult to discern in biological monitoring data [[11]][Bibliography]. For that reason, this paper will focus on building a model to discern between a state of stress and a state of amusement using the WESAD database [[8]][Bibliography], which used the **RespiBAN Professional** chest-device and **Empatica E4** wrist-device to collect sensor data. We expand upon previous work by performing more extensive feature extraction, addressing missing data considerations with a K-Nearest Neighbors upsampling strategy, and improving predictive accuracy using a stacking ensemble method. In addition to determining whether the engineered features in discriminating between stress and amusement were *useful*, we also want to answer *how* they were useful, which ones were *most* useful, if detecting between the states is effective using only the **Empatica E4** data, and a quantified analysis of the heterogeneity across individuals in the dataset.
+A challenge in the detection of stress from wearable data is its physiological similarity to the state of amusement [[10]][Bibliography]. The two states share physiological responses to stimuli that trigger a mixture of hormones like cortisol and adrenaline, thus increasing heart rate and muscle tension [[3,8]][Bibliography], which may be difficult to discern in biological monitoring data [[11]][Bibliography]. For that reason, this paper will focus on building a model to discern between a state of stress and a state of amusement using the WESAD database [[8]][Bibliography], which used the **RespiBAN Professional** chest-device and **Empatica E4** wrist-device to collect sensor data. We expand upon previous work by performing more extensive feature engineering and improving predictive accuracy by exploring a wide array of modeling techniques including a stacking ensemble strategy. In addition to determining whether the engineered features in discriminating between stress and amusement were *useful*, we also want to answer *how* they were useful, which ones were *most* useful, if detecting between the states is effective using only the **Empatica E4** data, and a quantified analysis of the heterogeneity across individuals in the dataset.
 
 # Data
 
 ## Description
 
-Raw sensor data was recorded on seventeen subjects that participated in the study. However, data of two of the subjects had to be discarded due to sensor malfunction. The data was recorded for each of the subjects with two different devices: RespiBAN, a chest-worn device, and Empatica E4, a wrist-worn device. Within this data analysis, we focused on the synchronised raw sensor data labels, which was created by subjects performing a double tapping gesture with their non-dominant hand on their chest.
+The data comes from the WESAD database. Raw sensor data was recorded on seventeen subjects that participated in a study in which they were monitored with wearable devices across changing affective states. However, data of two of the subjects had to be discarded due to sensor malfunction. The data was recorded for each of the subjects with two different devices: RespiBAN, a chest-worn device, and Empatica E4, a wrist-worn device. Within this data analysis, we focused on the synchronised raw sensor data labels, which was created by subjects performing a double tapping gesture with their non-dominant hand on their chest. In summary, the below predictors were included for each of the subjects in the study: 
 
 ## Feature Extraction
 
+Rather than perform downsampling and lower the sampling rate of the raw signals that were sampled at higher frequency, we utilized a method of performing feature extraction on rolling subsetted windows. 
+
+After removing data not corresponding to a state of either stress or amusement, the raw signal data was subsetted into 100-second rolling windows in Python, referenced in the Appendix (what figure). It was necessary to subset the data into the 100-second windows in order to calculate the features for each of the windows, which is a methodology practiced by (AUTHORS) in the (WESAD PAPER). Additionally, the method of subsetting signal data into windows is performed by Apple when the Apple Watch measures the mean ECG of its users. 100-second windows were chosen because of the necessity to extract features that made sense, as with not enough data, the features extracted would not make sense in the scope of the problem. (i.e. add more about how it wouldn’t make sense intuitively )
+
 Additional feature extraction was performed on the raw signal data in order to derive important aspects of the data. We did this using the Python package **neurokit2** [[12]][Bibliography]. The process for calculating these features uses rolling subsetted windows, and this accomodates downsampling concerns since we aren't lowering the sampling rate of the raw signals that were sampled at a higher frequency.
 
-We subsetted the raw signal data into 100-second rolling windows in Python. It was necessary to subset the data into the 100-second windows in order to calculate the features for each of the windows, which is a methodology practiced by Schmidt et al. (2018) [[12]][Bibliography]. 
-
-
-EDIT THIS:
-We chose 100-second windows because of the necessity to extract features that made sense, as with not enough data, the features extracted would not make sense in the scope of the problem. (i.e. add more about how it wouldn’t make sense intuitively )
+We subsetted the raw signal data into 100-second rolling windows in Python. It was necessary to subset the data into the 100-second windows in order to calculate the features for each of the windows, which is a methodology practiced by Schmidt et al. (2018) [[12]][Bibliography]. We chose to take 100-second windows at even 50 second intervals. Other work has used far smaller intervals between windows, but a small interval implies that neighboring windows will be built from much of the same data, resulting in a problematic temporal dependence among variables. Our attempt to limit this effect was in increasing the size of intervals between adjacent windows.
 
 ```{r}
 data_table %>%
@@ -125,9 +125,27 @@ data_table %>%
 
 
 
-# Methodology
+# Methodology and Results TODO: FIX TABLE REFERENCES
 
-# Results
+In this section, we explain our modeling strategy to predict whether a person is in a state of stress (1) or amusement (0) based on the features calculated from the WESAD sensor data.
+
+As explained in previous sections, the data includes a large number of covariates, many of which are highly-correlated. For these reasons, models must be chosen carefully to avoid issues surrounding overfitting and multicollinearity, and each modeling choice must be validated externally to determine whether out-of-sample fit is strong. 
+
+With these goals in mind, we implemented a wide array of machine learning models. Here, we chose to prioritize model accuracy over interpretability, but for the sake of understanding how the predictors relate to the response, two of our chosen models -- Lasso logistic and XGBoost classification -- provide interpretations of coefficient effects in addition to strong out-of-sample performance.
+
+First, we fit a logistic regression model with a lasso (L1) penalty. This model expands upon ordinary logistic regression by including a penalty on the sum of the absolute values of coefficients. In practice, this shrinks coefficients towards zero, performing variable selection by removing unimportant variables. These models can be effective out-of-sample, even when multicollinearity and high-dimensionality are concerns. The model allows an interpretation of coefficient effects as well, but an effect of including the L1 penalty is that under most conditions, we cannot construct asymptotic confidence intervals or perform hypothesis tests on coefficients. At the same time, coefficients are interpreted in the same way as in ordinary logistic regression. In our models, we performed standardization on each variable prior to fitting, so relative coefficient importance can loosely be judged by absolute value, given all variables are on the same scale. Table [!!!!!] includes a list of chosen covariates and their corresponding coefficients from a lasso logistic regression fit on variables from all sensors. While there are many coefficients to interpret, some key conclusions are that lower heart-rate variability is associated with stress and that several EDA features were informative in both directions. Each sensor had at least one variable chosen by the model.
+ 
+Next, we perform gradient boosting tree classification using XGBoost. This model takes a non-linear, ensemble approach to classification, similar to a random forest model. An advantage of this is that feature importance values can be computed. These values describe for each covariate how much the model improves based on splits on that variable.This gives another convenient metric for determining which variables are important. Variables with a feature importance greater than zero are included with their corresponding feature importance values in Table [!!!!!!]. Similarly, EDA and heart rate variability features were the most important in the model including all variables.
+
+Further, we chose a number of models to serve as black-box classifiers, providing good accuracy with little interpretability. These include support vector machine classifiers with linear, polynomial, and RBF kernels. We additionally fit support vector machine classifiers which use two-dimensional embeddings from partial least squares decomposition as input, based on the strong clustering result shown in the exploratory data analysis.
+
+Lastly, we created two stacking ensemble classifiers. These models take as input the predictions from a series of other machine learning models and fit a separate classifier to make a final prediction. For our stacking models, we used a lasso logistic regression as the final classifier. The first model takes as input the predictions from the lasso logistic and XGBoost models only, and the second takes as input the predictions from all previously-fitted models.
+
+To determine model performance, we performed 15-fold cross validation on random folds to provide an estimate of out-of-sample accuracy as well as F1 score. F1 score is the harmonic mean of precision and recall, and is better equipped for evaluating binary classification models when there is class imbalance in the data. For example, in a heavily class-imbalanced problem, a model may have high accuracy and low F1 score if it predicts the dominant class every single time, given it misses the non-dominant class in every instance.
+
+We are interested not just in whether we can create an accurate model based on the data from WESAD, but also whether each sensor can be used individually to distinguish stress and amusement, and also whether the wrist-based wearable on its own can perform effectively. To address this, we performed the entire above modeling procedure using a number of subsets of the data: one for each individual sensor; one with all the variables from the chest sensor; one with all the variables from the wrist sensor. The effectiveness of each model based on cross validation accuracy and F1 are listed in Table [!!!!!]. Overall, we found that the sensor data all together was most effective in classifying stress versus amusement, while the chest and wrist sensors on their own also proved effective. [LIST OF SENSORS] additionally provided generally accurate predictions, but not as effective as in conjunction.
+
+
 
 ```{r}
 accuracy_table %>%
@@ -158,8 +176,21 @@ full_accuracy_table %>%
   add_header_above(c(" "= 1, "All Variables" = 2, "Chest Sensor Data" = 2, "Wrist Sensor Data" = 2))
 ```
 
+## Heterogeneity Test
 
-# Conclusion & Limitations
+To quantify the heterogeneity across individuals, the feature with the largest coefficient in the lasso model from each of the individual devices was processed into a logistic regression model to predict stress vs. amusement with stress as the baseline. We choose only a subset describing the “most important” variables from each sensor because including all of the predictors with interactions with subject to test for heterogeneity would involve fitting far too many coefficients and overdetermine the model.
+
+The fitted logistic model fit the most important predictors (HRV_MeanNN, eda_slope_wr, bvp_nintieth_quantile, acc_x_mean, temp_wr_standard_deviation, and ie_ratio), indicator variables associated with each of the subjects, and the interaction terms between the indicator variables and the most important predictors. 
+
+From the fitted logistic regression model, it was found that all of the interaction terms were insignificant. This indicates that the relationship between each of the chosen features calculated from the wearable sensors had a consistent relationship with stress vs. amusement, even across subjects. This holds in spite of the fact that individual subjects may have been more likely to become stressed or amused in general, as evidenced by some subject main effects’ inclusion in the XGBoost feature importance chart and lasso logistic regression. At the same time, we cannot assert any homogeneity at a broader scale due to the lack of diversity in the population studied, which consisted largely of young men.
+
+
+
+# Conclusion
+
+After running a wide array of interpretable and black-box machine learning models, we determined that data from the Empirica E4 and RespiBAN devices can be used to accurately distinguish states of stress and states of amusement. We found that, while using both devices is preferable, data from the wrist-worn device alone is enough to create a sufficient model. Beyond this, many of the individual sensors alone provide enough relevant data for a reasonable classifier. Interpreting our models, we found that heart rate variability and data from the EDA were most helpful in predicting affective state. Lastly, we found that the effects impacting a likelihood of stress over amusement behave homogeneously across participants. While these results are encouraging, further study is needed to ensure that a model would work more broadly, given the homogeneity of participants in the original WESAD study, which consisted primarily of young men.
+
+
 
 # Appendix
 

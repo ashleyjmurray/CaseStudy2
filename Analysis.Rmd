@@ -160,19 +160,23 @@ feat_imp %>%
  
 Further, we chose a number of models to serve as black-box classifiers, providing good accuracy with little interpretability. These include support vector machine classifiers with linear, polynomial, and RBF kernels. We additionally fit support vector machine classifiers which use two-dimensional embeddings from partial least squares decomposition as input, based on the strong clustering result shown in the exploratory data analysis.
 
-## Stacking Ensemble Classifiers
-
 Lastly, we created two stacking ensemble classifiers. These models take as input the predictions from a series of other machine learning models and fit a separate classifier to make a final prediction. For our stacking models, we used a lasso logistic regression as the final classifier. The first model takes as input the predictions from the lasso logistic and XGBoost models only, and the second takes as input the predictions from all previously-fitted models.
 
-To determine model performance, we performed 15-fold cross validation on random folds to provide an estimate of out-of-sample accuracy as well as F1 score. F1 score is the harmonic mean of precision and recall, and is better equipped for evaluating binary classification models when there is class imbalance in the data. For example, in a heavily class-imbalanced problem, a model may have high accuracy and low F1 score if it predicts the dominant class every single time, given it misses the non-dominant class in every instance.
+To determine model performance, we performed 15-fold cross validation on random folds to provide an estimate of out-of-sample accuracy as well as F1 score. F1 score is the harmonic mean of precision and recall, and is better equipped for evaluating binary classification models when there is class imbalance in the data. For example, in a heavily class-imbalanced problem, a model may have high accuracy and low F1 score if it predicts the dominant class every single time, given it misses the non-dominant class in every instance. 
 
-We are interested not just in whether we can create an accurate model based on the data from WESAD, but also whether each sensor can be used individually to distinguish stress and amusement, and also whether the wrist-based wearable on its own can perform effectively. To address this, we performed the entire above modeling procedure using a number of subsets of the data: one for each individual sensor; one with all the variables from the chest sensor; one with all the variables from the wrist sensor. The effectiveness of each model based on cross validation accuracy and F1 are listed in Tables 4 and 5. Overall, we found that the sensor data altogether was most effective in classifying stress versus amusement, while the chest and wrist sensors on their own also proved effective. The sensors (ACC, BVP, ECG, EDA, and RESP) additionally provided generally accurate predictions, but not as effective as in conjunction.
+15-fold cross validation was also performed to choose model hyperparameters. Cross validation was performed using the GridSearchCV function of **sklearn** in Python. In the Lasso logistic regression, the value of C (regularization constant) was tuned; in the SVM models, the choice of kernel and regularization constant was tuned; in the XGBoost models, a wide array of hyperparameters were tuned. The final models shown are those with the hyperparameters that led to the best 15-fold cross validation accuracy score. For a full listing of hyperparameters tuned and utilized in the final models, please email nmo4@duke.edu.
+
+## Effectiveness of Wrist Sensor vs. Chest Sensor
+
+We are interested not just in whether we can create an accurate model based on the data from WESAD, but also whether each sensor can be used individually to distinguish stress and amusement, and also whether the wrist-based wearable on its own can perform effectively. Since a wrist-worn sensor is more convenient for daily use than an elaborate chest-worn sensor, a model using only the wrist-worn wearable would be especially pragmatic, since it is more likely that the end user will prefer to wear the wrist-worn device. Additionally, if any individual sensor performs particularly well on its own, this could lead to a more economical consumer solution using just one sensor, or a smaller subset of sensors.
+
+To address this, we performed the entire above modeling procedure using a number of subsets of the data: one for each individual sensor; one with all the variables from the chest sensor; one with all the variables from the wrist sensor. The effectiveness of each model based on cross validation accuracy and F1 are listed in Tables 4 and 5. Overall, we found that the chest data alone was most effective in classifying stress versus amusement, but models using just the data from the wrist-worn wearable and models using data from both wearables together were both effective. The sensors (ACC, BVP, ECG, EDA, and RESP) additionally provided generally accurate predictions, but not as effective as in conjunction.
  
 ```{r}
 full_accuracy_table %>%
   mutate_if(is.numeric, round, digits=3) %>%
   kableExtra::kable(booktabs = T,
-                    caption = "Accuracy (Acc) and F1 Scores for Devices",
+                    caption = "Accuracy (Acc) and F1 Scores for Devices on 15-Fold Cross Validation",
                     col.names = c("", "Acc", "F1",
                                   "Acc", "F1",
                                   "Acc", "F1")) %>%
@@ -185,7 +189,7 @@ full_accuracy_table %>%
 accuracy_table %>%
   mutate_if(is.numeric, round, digits=3) %>%
   kableExtra::kable(booktabs = T,
-                    caption = "Accuracy (Acc) and F1 Scores for Sensor Data",
+                    caption = "Accuracy (Acc) and F1 Scores for Sensor Data on 15-Fold Cross Validation",
                     col.names = c("", "Acc", "F1",
                                   "Acc", "F1",
                                   "Acc", "F1",
@@ -197,6 +201,8 @@ accuracy_table %>%
   add_header_above(c(" "= 1, "ACC" = 2, "BVP" = 2, "ECG" = 2, 
                      "EDA (Chest)" = 2, "EDA (Wrist)" = 2, "RESP" = 2))
 ```
+
+As can be verified in Tables 4 and 5, the models using all chest, wrist, or combined chest-wrist data perform better than the naive predictor that chooses the more common class every time. This naive predictor achieves an accuracy score of 0.672 and an F1 score of 0.803. The best performing model overall is the XGBoost classifier trained on data from the chest-worn device only. Across the board, the XGBoost classifiers performed best, while the Lasso logistic regression and SVM models are also individually effective. Interestingly, the stacking ensemble classifiers were not as effective as the individual component models.
  
 ## Heterogeneity Test
  

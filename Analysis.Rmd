@@ -84,6 +84,9 @@ accuracy_table <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/accuracy_table.cs
 
 # full_accuracy_table: accuracy table depicting differences among devices
 full_accuracy_table <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/full_accuracy_table.csv")
+
+# full_data: represents all 2 GB of the data, prior to performed operations
+full_data <- read_csv("/Volumes/G-DRIVE mobile/CaseStudy2/amusement_and_stress.csv")
 ```
 
 # Introduction
@@ -129,6 +132,120 @@ knitr::include_graphics(c("pls.png"))
 ```
 
 Additionally, we explored correlations among the variables to account for multicollinearity. This is included in the Appendix.
+
+```{r out.width="75%",out.height="75%",fig.show='hold',fig.align='center', fig.cap="Histogram of Raw Sensor Data (Chest-Data Only for Subject 2)"}
+set.seed(1)
+raw_sampled <- full_data %>%
+  filter(subject == "S2") %>%
+  mutate(Condition = ifelse(label == 2, "Stress", "Amusement"))
+
+raw_sampled <- raw_sampled %>%
+  filter(Condition == "Amusement") %>%
+  # arrange(desc(X1)) %>%
+  mutate(new_id = row_number()) %>%
+  rbind(raw_sampled %>%
+          filter(Condition == "Stress") %>%
+          # arrange(desc(X1)) %>%
+          mutate(new_id = row_number()))
+
+p1 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(ACC_x)) %>%
+  filter(ACC_x > quantile(ACC_x, probs = 0.25) - (1.5 * IQR(ACC_x)),
+         ACC_x < quantile(ACC_x, probs = 0.75) + (1.5 * IQR(ACC_x))) %>%
+  ggplot(aes(x=ACC_x, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("ACC: X (g)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p2 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(ECG)) %>%
+  filter(ECG > quantile(ECG, probs = 0.25) - (1.5 * IQR(ECG)),
+         ECG < quantile(ECG, probs = 0.75) + (1.5 * IQR(ECG))) %>%
+  ggplot(aes(x=ECG, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("ECG (mV)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p3 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(EDA_y)) %>%
+  filter(EDA_y > quantile(EDA_y, probs = 0.25) - (1.5 * IQR(EDA_y)),
+         EDA_y < quantile(EDA_y, probs = 0.75) + (1.5 * IQR(EDA_y))) %>%
+  ggplot(aes(x=EDA_y, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("EDA (mu-s)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p4 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(Temp)) %>%
+  filter(Temp > quantile(Temp, probs = 0.25) - (1.5 * IQR(Temp)),
+         Temp < quantile(Temp, probs = 0.75) + (1.5 * IQR(Temp))) %>%
+  ggplot(aes(x=Temp, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("TEMP (C)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p5 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(Resp)) %>%
+  filter(Resp > quantile(Resp, probs = 0.25) - (1.5 * IQR(Resp)),
+         Resp < quantile(Resp, probs = 0.75) + (1.5 * IQR(Resp))) %>%
+  ggplot(aes(x=Resp, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("RESP (%)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p6 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(BVP)) %>%
+  filter(BVP > quantile(BVP, probs = 0.25) - (1.5 * IQR(BVP)),
+         BVP < quantile(BVP, probs = 0.75) + (1.5 * IQR(BVP))) %>%
+  ggplot(aes(x=BVP, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("BVP (PPG)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+plot_row <- cowplot::plot_grid(p1, p2, p3, p4, p5, p6, 
+                   ncol = 2, align = 'v', axis = 'lr', label_size = 8)
+
+# now add the title
+# title <- ggdraw() +
+#   draw_label(
+#     "Histogram of Raw Sensor Data",
+#     x = 0,
+#     hjust = 0
+#   ) +
+#   theme(
+#     # add margin on the left of the drawing canvas,
+#     # so title is aligned with left edge of first plot
+#     plot.margin = margin(0, 0, 0, 7)
+#   )
+# plot_grid(
+#   title, plot_row,
+#   ncol = 1,
+#   # rel_heights values control vertical title margins
+#   rel_heights = c(0.1, 1)
+# )
+# 
+# ggsave("EDA_vis.png")
+
+knitr::include_graphics(c("EDA_vis.png"))
+```
 
 # Methodology and Results
 
@@ -259,6 +376,229 @@ After running a wide array of interpretable and black-box machine learning model
 
 
 ## Additional EDA
+
+Chest-Data Raw Sensor Data on ALL participants (minimized and we showed only for subject 2 in the paper)
+
+```{r}
+set.seed(1)
+raw_sampled <- full_data %>%
+  filter(subject == "S3") %>%
+  mutate(Condition = ifelse(label == 2, "Stress", "Amusement"))
+
+raw_sampled <- raw_sampled %>%
+  filter(Condition == "Amusement") %>%
+  # arrange(desc(X1)) %>%
+  mutate(new_id = row_number()) %>%
+  rbind(raw_sampled %>%
+          filter(Condition == "Stress") %>%
+          # arrange(desc(X1)) %>%
+          mutate(new_id = row_number()))
+
+p1 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(ACC_x)) %>%
+  filter(ACC_x > quantile(ACC_x, probs = 0.25) - (1.5 * IQR(ACC_x)),
+         ACC_x < quantile(ACC_x, probs = 0.75) + (1.5 * IQR(ACC_x))) %>%
+  ggplot(aes(x=ACC_x, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("ACC: X (g)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p2 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(ECG)) %>%
+  filter(ECG > quantile(ECG, probs = 0.25) - (1.5 * IQR(ECG)),
+         ECG < quantile(ECG, probs = 0.75) + (1.5 * IQR(ECG))) %>%
+  ggplot(aes(x=ECG, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("ECG (mV)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p3 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(EDA_y)) %>%
+  filter(EDA_y > quantile(EDA_y, probs = 0.25) - (1.5 * IQR(EDA_y)),
+         EDA_y < quantile(EDA_y, probs = 0.75) + (1.5 * IQR(EDA_y))) %>%
+  ggplot(aes(x=EDA_y, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("EDA (mu-s)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p4 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(Temp)) %>%
+  filter(Temp > quantile(Temp, probs = 0.25) - (1.5 * IQR(Temp)),
+         Temp < quantile(Temp, probs = 0.75) + (1.5 * IQR(Temp))) %>%
+  ggplot(aes(x=Temp, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("TEMP (C)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p5 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(Resp)) %>%
+  filter(Resp > quantile(Resp, probs = 0.25) - (1.5 * IQR(Resp)),
+         Resp < quantile(Resp, probs = 0.75) + (1.5 * IQR(Resp))) %>%
+  ggplot(aes(x=Resp, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("RESP (%)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p6 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(BVP)) %>%
+  filter(BVP > quantile(BVP, probs = 0.25) - (1.5 * IQR(BVP)),
+         BVP < quantile(BVP, probs = 0.75) + (1.5 * IQR(BVP))) %>%
+  ggplot(aes(x=BVP, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("BVP (PPG)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+plot_row <- cowplot::plot_grid(p1, p2, p3, p4, p5, p6, 
+                   ncol = 2, align = 'v', axis = 'lr', label_size = 8)
+
+# now add the title
+title <- ggdraw() +
+  draw_label(
+    "Histogram of Raw Sensor Data (Chest-Data Only for Subject 3)",
+    x = 0,
+    hjust = 0
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 7)
+  )
+plot_grid(
+  title, plot_row,
+  ncol = 1,
+  # rel_heights values control vertical title margins
+  rel_heights = c(0.1, 1)
+)
+```
+
+```{r}
+set.seed(1)
+raw_sampled <- full_data %>%
+  filter(subject == "S4") %>%
+  mutate(Condition = ifelse(label == 2, "Stress", "Amusement"))
+
+raw_sampled <- raw_sampled %>%
+  filter(Condition == "Amusement") %>%
+  # arrange(desc(X1)) %>%
+  mutate(new_id = row_number()) %>%
+  rbind(raw_sampled %>%
+          filter(Condition == "Stress") %>%
+          # arrange(desc(X1)) %>%
+          mutate(new_id = row_number()))
+
+p1 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(ACC_x)) %>%
+  filter(ACC_x > quantile(ACC_x, probs = 0.25) - (1.5 * IQR(ACC_x)),
+         ACC_x < quantile(ACC_x, probs = 0.75) + (1.5 * IQR(ACC_x))) %>%
+  ggplot(aes(x=ACC_x, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("ACC: X (g)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p2 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(ECG)) %>%
+  filter(ECG > quantile(ECG, probs = 0.25) - (1.5 * IQR(ECG)),
+         ECG < quantile(ECG, probs = 0.75) + (1.5 * IQR(ECG))) %>%
+  ggplot(aes(x=ECG, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("ECG (mV)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p3 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(EDA_y)) %>%
+  filter(EDA_y > quantile(EDA_y, probs = 0.25) - (1.5 * IQR(EDA_y)),
+         EDA_y < quantile(EDA_y, probs = 0.75) + (1.5 * IQR(EDA_y))) %>%
+  ggplot(aes(x=EDA_y, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("EDA (mu-s)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p4 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(Temp)) %>%
+  filter(Temp > quantile(Temp, probs = 0.25) - (1.5 * IQR(Temp)),
+         Temp < quantile(Temp, probs = 0.75) + (1.5 * IQR(Temp))) %>%
+  ggplot(aes(x=Temp, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("TEMP (C)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p5 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(Resp)) %>%
+  filter(Resp > quantile(Resp, probs = 0.25) - (1.5 * IQR(Resp)),
+         Resp < quantile(Resp, probs = 0.75) + (1.5 * IQR(Resp))) %>%
+  ggplot(aes(x=Resp, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("RESP (%)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+p6 <- raw_sampled %>%
+  mutate(Condition = as.factor(Condition)) %>%
+  filter(!is.na(BVP)) %>%
+  filter(BVP > quantile(BVP, probs = 0.25) - (1.5 * IQR(BVP)),
+         BVP < quantile(BVP, probs = 0.75) + (1.5 * IQR(BVP))) %>%
+  ggplot(aes(x=BVP, fill = Condition)) +
+  geom_histogram() +
+  theme_classic() +
+  ylab("") + xlab("BVP (PPG)") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+plot_row <- cowplot::plot_grid(p1, p2, p3, p4, p5, p6, 
+                   ncol = 2, align = 'v', axis = 'lr', label_size = 8)
+
+# now add the title
+title <- ggdraw() +
+  draw_label(
+    "Histogram of Raw Sensor Data (Chest-Data Only for Subject 4)",
+    x = 0,
+    hjust = 0
+  ) +
+  theme(
+    # add margin on the left of the drawing canvas,
+    # so title is aligned with left edge of first plot
+    plot.margin = margin(0, 0, 0, 7)
+  )
+plot_grid(
+  title, plot_row,
+  ncol = 1,
+  # rel_heights values control vertical title margins
+  rel_heights = c(0.1, 1)
+)
+```
+
 
 Table of 10 most correlated engineered features ($\rho > 0.7$):
 

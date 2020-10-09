@@ -133,8 +133,6 @@ knitr::include_graphics(c("pls.png"))
 
 Additionally, we were interested in looking at the relationships between the raw sensor data and the response (stress vs. amusement) in each of the fifteen participants in the study. We created density plots of the raw data for each type of sensor data for each subject participant, colored by stress versus amusement. Due to the quantity of these plots, they are located in the Appendix. We found that across all fifteen subjects, stress and amusement are perfectly separated by the values of EDA and temperature. Because of the small sample size of the study, it is difficult to draw conclusions from this. It is possible that this perfect separation constitutes a true relationship between EDA or temperature and stress, but it is also possible that this is an anomoly that could impact the effectiveness of our models. We hope to make no assumption either way and find models that generalize well across subjects. We exclude interaction terms between subjects and EDA/temperature variables to ensure the model doesn't overfit to these specific splits.
 
-Additionally, we explored correlations among the variables to account for multicollinearity. This is included in the Appendix.
-
 ```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%

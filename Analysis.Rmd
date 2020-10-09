@@ -339,7 +339,7 @@ The feature importance values from XGBoost classification are more challenging t
 
 ## Heterogeneity Test
  
-To quantify the heterogeneity across individuals, the feature with the largest coefficient in the lasso model from each of the individual devices was processed into a logistic regression model to predict stress vs. amusement with stress as the baseline. We choose only a subset describing the *“most important”* variables from each sensor because including all of the predictors with interactions with subject to test for heterogeneity would involve fitting far too many coefficients and overdetermine the model.
+To quantify the heterogeneity across individuals, the feature with the largest coefficient in the lasso model from each of the individual devices was processed into a logistic regression model to predict stress vs. amusement with stress as the baseline. 
 
 The fitted logistic model fit the most important predictors (`HRV_MeanNN`, `eda_slope_wr`, `bvp_nintieth_quantile`, `acc_x_mean`, `temp_wr_standard_deviation`, and `ie_ratio`), indicator variables associated with each of the subjects, and the interaction terms between the indicator variables and the most important predictors. This is illustrated by the model:
 

@@ -101,7 +101,7 @@ A challenge in the detection of stress from wearable data is its physiological s
 
 ## Description
 
-The data comes from the WESAD database. Raw sensor data was recorded on seventeen subjects that participated in a study in which they were monitored with wearable devices across changing affective states. However, data of two of the subjects had to be discarded due to sensor malfunction. The data was recorded for each of the subjects with two different devices: RespiBAN Professional, a chest-worn device, and Empatica E4, a wrist-worn device. Within this data analysis, we focused on the synchronised raw sensor data labels, which was created by subjects performing a double tapping gesture with their non-dominant hand on their chest. In summary, these predictors were included for each of the subjects in the study: electrocardiogram (ECG), electrodermal activity (EDA), skin temperature (TEMP), electromyogram (EMG), respiration (RESP), and 3-axis accelerometer (ACC) from the **RespiBAN Professional** at 700 Hz, and blood volume pulse (BVP), electrodermal activity (EDA), skin temperature (TEMP), and 3-axis accelerometer (ACC) from the **Empatica E4** at 64 Hz, 4 Hz, 4 Hz, and 32 Hz, respectively.
+The data comes from the WESAD database [[8]][Bibliography]. Raw sensor data was recorded on seventeen subjects that participated in a study in which they were monitored with wearable devices across changing affective states. However, data of two of the subjects had to be discarded due to sensor malfunction. The data was recorded for each of the subjects with two different devices: RespiBAN Professional, a chest-worn device, and Empatica E4, a wrist-worn device. Within this data analysis, we focused on the synchronised raw sensor data labels, which was created by subjects performing a double tapping gesture with their non-dominant hand on their chest. In summary, these predictors were included for each of the subjects in the study: electrocardiogram (ECG), electrodermal activity (EDA), skin temperature (TEMP), electromyogram (EMG), respiration (RESP), and 3-axis accelerometer (ACC) from the **RespiBAN Professional** at 700 Hz, and blood volume pulse (BVP), electrodermal activity (EDA), skin temperature (TEMP), and 3-axis accelerometer (ACC) from the **Empatica E4** at 64 Hz, 4 Hz, 4 Hz, and 32 Hz, respectively.
 
 ## Feature Extraction
 
@@ -133,7 +133,7 @@ knitr::include_graphics(c("pls.png"))
 
 Additionally, we explored correlations among the variables to account for multicollinearity. This is included in the Appendix.
 
-```{r results = 'hide"}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S2") %>%
@@ -245,7 +245,7 @@ plot_grid(
 ggsave("EDA_vis.png")
 ```
 
-```{r out.width="75%",out.height="75%",fig.show='hold',fig.align='center', fig.cap="Density of Raw Sensor Data (Chest-Data Only for Subject 2)}
+```{r out.width="75%",out.height="75%",fig.show='hold',fig.align='center', fig.cap="Density of Raw Sensor Data (Chest-Data Only for Subject 2)"}
 knitr::include_graphics(c("EDA_vis.png"))
 ```
 
@@ -325,7 +325,9 @@ As can be verified in Tables 4 and 5, the models using all chest, wrist, or comb
 
 ## Interpretation of Coefficients
 
-# !!! INCLUDE PLOT HERE !!!
+```{r out.width="75%",out.height="75%",fig.show='hold',fig.align='center', fig.cap="Predicted Probabilities of Stress (Versus Amusement)"}
+knitr::include_graphics(c("coef_plot.png"))
+```
 
 In general, we chose a wide array of models with the primary goal of maximizing model performance over the secondary goal of model interpretability. We decided to privilege model performance due to the importance of the application to real-world scenarios in which the end-user of a wearable device is interested in monitoring stress for health-related reasons. We felt that interpretability was of less relevance to the end-user than model accuracy, especially given the preexisting research that has been done on biological markers of stress. That being said, it is crucial to understand which sensor data is driving our models for future decisions regarding the usefulness of specific sensors and to gain a better understanding of the difference between the bodily reaction to stress and amusement.
 
@@ -381,7 +383,7 @@ After running a wide array of interpretable and black-box machine learning model
 
 Chest-Data Raw Sensor Data on ALL participants (minimized and we showed only for subject 2 in the paper)
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S3") %>%
@@ -499,7 +501,7 @@ knitr::include_graphics(c("EDA_vis3.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide' , eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S4") %>%
@@ -618,7 +620,7 @@ ggsave("EDA_vis4.png")
 knitr::include_graphics(c("EDA_vis4.png"))
 ```
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S5") %>%
@@ -734,7 +736,7 @@ ggsave("EDA_vis5.png")
 knitr::include_graphics(c("EDA_vis5.png"))
 ```
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S6") %>%
@@ -851,7 +853,7 @@ knitr::include_graphics(c("EDA_vis6.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S7") %>%
@@ -967,7 +969,7 @@ knitr::include_graphics(c("EDA_vis7.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S8") %>%
@@ -1082,7 +1084,7 @@ knitr::include_graphics(c("EDA_vis8.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S9") %>%
@@ -1198,7 +1200,7 @@ knitr::include_graphics(c("EDA_vis9.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S10") %>%
@@ -1314,7 +1316,7 @@ knitr::include_graphics(c("EDA_vis10.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S11") %>%
@@ -1430,7 +1432,7 @@ knitr::include_graphics(c("EDA_vis11.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S13") %>%
@@ -1546,7 +1548,7 @@ knitr::include_graphics(c("EDA_vis13.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S14") %>%
@@ -1663,7 +1665,7 @@ knitr::include_graphics(c("EDA_vis14.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S15") %>%
@@ -1780,7 +1782,7 @@ knitr::include_graphics(c("EDA_vis15.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S16") %>%
@@ -1897,7 +1899,7 @@ knitr::include_graphics(c("EDA_vis16.png"))
 ```
 
 
-```{r results = 'hide'}
+```{r results = 'hide', eval=FALSE}
 set.seed(1)
 raw_sampled <- full_data %>%
   filter(subject == "S17") %>%
